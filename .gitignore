@@ -1,0 +1,8 @@
+# local env files
+.env*.local
+.env
+
+/node_modules
+
+# credentials
+firebaseCredentials.json
