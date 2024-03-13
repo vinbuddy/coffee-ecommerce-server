@@ -4,6 +4,7 @@ import cors from "cors";
 import bodyParser from "body-parser";
 
 import userRoutes from "./routes/user.route.js";
+import authRoutes from "./routes/auth.route.js";
 
 env.config();
 
@@ -18,6 +19,7 @@ app.disable("etag");
 
 // Routes
 app.use("/user", userRoutes);
+app.use("/auth", authRoutes);
 
 app.listen(port, () => {
     console.log(`running on http://localhost:${port}`);

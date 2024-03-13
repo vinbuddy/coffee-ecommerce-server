@@ -1,8 +1,9 @@
 import firebaseAdmin from "firebase-admin";
-var firebaseCredentials = require("../firebaseCredentials.json");
+import firebaseCredentials from "../firebaseCredentials.json" with { type: "json" };;
+// var firebaseCredentials = require("../firebaseCredentials.json");
 
 firebaseAdmin.initializeApp({
-    credential: admin.credential.cert(firebaseCredentials),
+    credential: firebaseAdmin.credential.cert(firebaseCredentials),
 });
 
 export { firebaseAdmin };
