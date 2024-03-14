@@ -1,6 +1,6 @@
 import connectToDB from "../config/db.js";
 
-async function socialRegister(req, res) {
+async function createUserAccount(req, res) {
     const data = req.body;
 
     let role_id = null;
@@ -60,4 +60,4 @@ async function socialRegister(req, res) {
     await pool.end();
 }
 
-export { socialRegister };
+export { createUserAccount };

@@ -1,4 +1,3 @@
-// import pool from "../config/db.js";
 import connectToDB from "../config/db.js";
 
 async function getUsers(req, res) {
@@ -17,12 +16,23 @@ async function getUsers(req, res) {
     }
 }
 
-function addUser(req, res) {}
+async function getUser(req, res) {
+    const user_id = req.params.id;
+    const pool = await connectToDB();
 
-function login(req, res) {
-    const { username, password } = req.body;
+    try {
+        const [rows, fields] = await pool.execute(
+            `SELECT * FROM Users WHERE id = '${user_id}'`
+        );
+        await pool.end();
+        return res
+            .status(200)
+            .json({ status: 200, message: "success", data: rows[0] });
+    } catch (error) {
+        await pool.end();
+
+        return res.status(500).json({ status: 500, message: error.message });
+    }
 }
 
-function register(req, res) {}
-
-export { getUsers, addUser, login, register };
+export { getUsers, getUser };
