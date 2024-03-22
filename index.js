@@ -5,6 +5,10 @@ import bodyParser from "body-parser";
 
 import userRoutes from "./routes/user.route.js";
 import authRoutes from "./routes/auth.route.js";
+import productRoutes from "./routes/product.route.js";
+import toppingRoutes from "./routes/topping.route.js";
+import sizeRoutes from "./routes/size.route.js";
+import categoryRoutes from "./routes/category.route.js";
 
 env.config();
 
@@ -20,6 +24,10 @@ app.disable("etag");
 // Routes
 app.use("/user", userRoutes);
 app.use("/auth", authRoutes);
+app.use("/product", productRoutes);
+app.use("/topping", toppingRoutes);
+app.use("/size", sizeRoutes);
+app.use("/category", categoryRoutes);
 
 app.listen(port, () => {
     console.log(`running on http://localhost:${port}`);

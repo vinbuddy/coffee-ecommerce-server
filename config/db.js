@@ -13,7 +13,12 @@ const dbConfig = {
 // const pool = mysql.createConnection(dbConfig);
 
 async function connectToDB() {
-    const connection = await mysql.createConnection(dbConfig);
-    return connection;
+    try {
+        const connection = await mysql.createConnection(dbConfig);
+        return connection;
+    } catch (error) {
+        console.log("error: ", error);
+        return null;
+    }
 }
 export default connectToDB;
