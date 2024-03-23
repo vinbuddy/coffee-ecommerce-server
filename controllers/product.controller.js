@@ -247,7 +247,7 @@ async function deleteProduct(req, res) {
     const pool = await connectToDB();
 
     try {
-        const pool = await connectToDB();
+        await pool.beginTransaction();
         const product_id = req.params.id;
 
         const [result] = await pool.query(
@@ -260,11 +260,23 @@ async function deleteProduct(req, res) {
                 .json({ status: 400, error: "Product not found" });
         }
 
+        await pool.query(
+            `DELETE FROM ProductToppings WHERE product_id = '${product_id}'`
+        );
+
+        // Xóa bản ghi trong ProductSizes
+        await pool.query(
+            `DELETE FROM ProductSizes WHERE product_id = '${product_id}'`
+        );
+
+        await pool.commit();
+
         return res.status(200).json({
             status: 200,
             message: "Product deleted successfully",
         });
     } catch (error) {
+        await pool.rollback();
         await pool.end();
 
         return res.status(500).json({ status: 500, message: error.message });

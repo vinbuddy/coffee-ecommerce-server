@@ -9,6 +9,7 @@ import productRoutes from "./routes/product.route.js";
 import toppingRoutes from "./routes/topping.route.js";
 import sizeRoutes from "./routes/size.route.js";
 import categoryRoutes from "./routes/category.route.js";
+import storeRoutes from "./routes/store.route.js";
 
 env.config();
 
@@ -28,6 +29,7 @@ app.use("/product", productRoutes);
 app.use("/topping", toppingRoutes);
 app.use("/size", sizeRoutes);
 app.use("/category", categoryRoutes);
+app.use("/store", storeRoutes);
 
 app.listen(port, () => {
     console.log(`running on http://localhost:${port}`);
