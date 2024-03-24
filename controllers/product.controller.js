@@ -8,7 +8,7 @@ async function getProducts(req, res) {
 
         // Get all product
         if (category_id === 0) {
-            const [rows, fields] = await pool.execute(
+            const [rows, fields] = await pool.query(
                 `SELECT Products.*, Categories.category_name FROM Products JOIN Categories ON Products.category_id = Categories.id WHERE name LIKE '%${searchName}%'`
             );
 
@@ -17,7 +17,7 @@ async function getProducts(req, res) {
                 .status(200)
                 .json({ status: 200, message: "success", data: rows });
         } else {
-            const [rows, fields] = await pool.execute(
+            const [rows, fields] = await pool.query(
                 `SELECT Products.*, Categories.category_name FROM Products JOIN Categories ON Products.category_id = Categories.id WHERE Categories.id = '${category_id}' AND name LIKE '%${searchName}%'`
             );
 
@@ -37,7 +37,7 @@ async function getProduct(req, res) {
     const pool = await connectToDB();
     try {
         const product_id = req.params.id;
-        const [rows, fields] = await pool.execute(
+        const [rows, fields] = await pool.query(
             `SELECT Products.*, Categories.category_name FROM Products JOIN Categories ON Products.category_id = Categories.id WHERE Products.id = '${product_id}'`
         );
         await pool.end();
@@ -70,28 +70,28 @@ async function createProduct(req, res) {
 
         await pool.beginTransaction();
 
-        const [productResult] = await pool.execute(sql, values);
+        const [productResult] = await pool.query(sql, values);
 
         const productId = productResult.insertId;
 
         if (product_toppings && product_toppings.length > 0) {
             for (const topping of product_toppings) {
-                await pool.execute(
+                await pool.query(
                     "INSERT INTO ProductToppings (product_id, topping_id) VALUES (?, ?)",
-                    [productId, topping.topping_id]
+                    [productId, topping]
                 );
             }
         }
 
         if (product_sizes && product_sizes.length > 0) {
             for (const size of product_sizes) {
-                await pool.execute(
+                await pool.query(
                     "INSERT INTO ProductSizes (product_id, size_id, size_price) VALUES (?, ?, ?)",
                     [productId, size.size_id, size.size_price]
                 );
             }
         }
-        const [rows, fields] = await pool.execute(
+        const [rows, fields] = await pool.query(
             `SELECT Products.*, Categories.category_name FROM Products JOIN Categories ON Products.category_id = Categories.id WHERE Products.id = '${productId}'`
         );
         await pool.commit();
@@ -153,14 +153,11 @@ async function editProduct(req, res) {
         const sizeCount = size_topping_count[1].count;
 
         if (product_toppings.length < toppingCount) {
-            // Delete
-            const toppingKept = product_toppings.map(
-                (product_topping) => product_topping.topping_id
-            );
+            // Deletes
 
             await pool.query(
                 "DELETE FROM ProductToppings WHERE product_id = ? AND topping_id NOT IN (?)",
-                [product_id, toppingKept]
+                [product_id, product_toppings]
             );
         } else {
             // Add new toppings
@@ -172,14 +169,13 @@ async function editProduct(req, res) {
             const existingToppings = rows.map((row) => row.topping_id);
 
             const newToppings = product_toppings.filter(
-                (product_topping) =>
-                    !existingToppings.includes(product_topping.topping_id)
+                (product_topping) => !existingToppings.includes(product_topping)
             );
 
             for (const topping of newToppings) {
-                await pool.execute(
+                await pool.query(
                     "INSERT INTO ProductToppings (product_id, topping_id) VALUES (?, ?)",
-                    [product_id, topping.topping_id]
+                    [product_id, topping]
                 );
             }
         }
@@ -250,6 +246,14 @@ async function deleteProduct(req, res) {
         await pool.beginTransaction();
         const product_id = req.params.id;
 
+        await pool.query(
+            `DELETE FROM ProductToppings WHERE product_id = '${product_id}'`
+        );
+
+        await pool.query(
+            `DELETE FROM ProductSizes WHERE product_id = '${product_id}'`
+        );
+
         const [result] = await pool.query(
             `DELETE FROM Products WHERE id = '${product_id}'`
         );
@@ -259,15 +263,6 @@ async function deleteProduct(req, res) {
                 .status(404)
                 .json({ status: 400, error: "Product not found" });
         }
-
-        await pool.query(
-            `DELETE FROM ProductToppings WHERE product_id = '${product_id}'`
-        );
-
-        // Xóa bản ghi trong ProductSizes
-        await pool.query(
-            `DELETE FROM ProductSizes WHERE product_id = '${product_id}'`
-        );
 
         await pool.commit();
 
