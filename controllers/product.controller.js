@@ -261,7 +261,7 @@ async function deleteProduct(req, res) {
         if (result.affectedRows === 0) {
             return res
                 .status(404)
-                .json({ status: 400, error: "Product not found" });
+                .json({ status: 400, message: "Product not found" });
         }
 
         await pool.commit();

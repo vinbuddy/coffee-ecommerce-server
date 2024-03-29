@@ -27,7 +27,7 @@ async function createVnPayUrl(req, res) {
         let returnUrl = process.env.vnp_ReturnUrl;
         let orderId = moment(date).format("DDHHmmss");
 
-        let amount = req.body.amount; // request
+        let amount = req.body.total_payment; // request
         let bankCode = req.body.bankCode; // request
         let locale = req.body.language;
 
@@ -83,7 +83,7 @@ async function createMomoUrl(req, res) {
         let orderInfo = "Thanh toán bằng MoMo cho đơn: " + orderId;
         let redirectUrl = process.env.momo_ReturnUrl;
         let ipnUrl = process.env.momo_ReturnUrl;
-        let amount = req.body.amount;
+        let amount = req.body.total_payment;
         // let requestType = "captureWallet"
         let requestType = "payWithATM";
         let extraData = ""; //pass empty value if your merchant does not have stores

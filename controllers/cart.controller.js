@@ -290,7 +290,7 @@ async function deleteCart(req, res) {
         if (result.affectedRows === 0) {
             return res
                 .status(404)
-                .json({ status: 400, error: "cart item not found" });
+                .json({ status: 400, message: "cart item not found" });
         }
 
         await pool.commit();
