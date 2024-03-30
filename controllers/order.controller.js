@@ -9,14 +9,13 @@ async function getOrders(req, res) {
             LEFT JOIN Users ON Users.id = Orders.user_id`
         );
 
-        await pool.end();
         return res
             .status(200)
             .json({ status: 200, message: "success", data: rows });
     } catch (error) {
-        await pool.end();
-
         return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        await pool.end();
     }
 }
 
@@ -32,14 +31,13 @@ async function getUserOrders(req, res) {
             WHERE Orders.user_id = '${user_id}'`
         );
 
-        await pool.end();
         return res
             .status(200)
             .json({ status: 200, message: "success", data: rows });
     } catch (error) {
-        await pool.end();
-
         return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        await pool.end();
     }
 }
 
@@ -118,17 +116,19 @@ async function getOrderInfo(req, res) {
         };
 
         await pool.commit();
-        await pool.end();
+
         return res
             .status(200)
             .json({ status: 200, message: "success", data: orderInfo });
     } catch (error) {
         await pool.rollback();
-        await pool.end();
 
         return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        await pool.end();
     }
 }
+
 async function createOrder(req, res) {
     const pool = await connectToDB();
     try {
@@ -172,7 +172,7 @@ async function createOrder(req, res) {
                 order_status,
                 order_type,
                 order_date,
-                order_note,
+                order_note || null,
                 shipping_cost,
                 receiver_name,
                 phone_number,
@@ -195,7 +195,7 @@ async function createOrder(req, res) {
                 order_status,
                 order_type,
                 order_date,
-                order_note,
+                order_note || null,
                 shipping_cost,
                 receiver_name,
                 phone_number,
@@ -238,17 +238,19 @@ async function createOrder(req, res) {
         );
 
         await pool.commit();
-        await pool.end();
+
         return res
             .status(200)
             .json({ status: 200, message: "success", data: rows[0] });
     } catch (error) {
         await pool.rollback();
-        await pool.end();
 
         return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        await pool.end();
     }
 }
+
 async function editOrderStatus(req, res) {
     const pool = await connectToDB();
 
@@ -269,14 +271,14 @@ async function editOrderStatus(req, res) {
         }
 
         await pool.commit();
-        await pool.end();
 
         return res.status(200).json({ status: 200, message: "success" });
     } catch (error) {
         await pool.rollback();
-        await pool.commit();
 
         return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        await pool.end();
     }
 }
 

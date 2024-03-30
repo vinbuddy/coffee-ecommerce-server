@@ -5,14 +5,14 @@ async function getUsers(req, res) {
 
     try {
         const [rows, fields] = await pool.execute("SELECT * FROM Users");
-        await pool.end();
+
         return res
             .status(200)
             .json({ status: 200, message: "success", data: rows });
     } catch (error) {
-        await pool.end();
-
         return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        await pool.end();
     }
 }
 
@@ -24,14 +24,14 @@ async function getUser(req, res) {
         const [rows, fields] = await pool.execute(
             `SELECT * FROM Users WHERE id = '${user_id}'`
         );
-        await pool.end();
+
         return res
             .status(200)
             .json({ status: 200, message: "success", data: rows[0] });
     } catch (error) {
-        await pool.end();
-
         return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        await pool.end();
     }
 }
 

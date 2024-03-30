@@ -9,6 +9,9 @@ const dbConfig = {
     database: process.env.DB_DBNAME,
     password: process.env.DB_PASSWORD,
     port: 10082,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0,
 };
 // const pool = mysql.createConnection(dbConfig);
 

@@ -160,7 +160,7 @@ async function createMomoUrl(req, res) {
         });
 
         req.on("error", (e) => {
-            console.log("MoMo Error ", e.message);
+            return res.status(400).json({ status: 400, message: e.message });
         });
 
         reqq.write(requestBody);

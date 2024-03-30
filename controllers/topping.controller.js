@@ -6,18 +6,22 @@ async function createTopping(req, res) {
     try {
         const { topping_name, topping_price } = req.body;
 
-        const [rows, field] = await pool.query(
-            "INSERT INTO Toppings (topping_name, topping_name) VALUES (?, ?)",
+        const [result] = await pool.query(
+            "INSERT INTO Toppings (topping_name, topping_price) VALUES (?, ?)",
             [topping_name, topping_price]
         );
 
-        await pool.end();
+        const [rows] = await pool.query(
+            `SELECT * FROM Toppings WHERE id = '${result.insertId}'`
+        );
+
         return res
             .status(200)
-            .json({ status: 200, message: "success", data: rows });
+            .json({ status: 200, message: "success", data: rows[0] });
     } catch (error) {
-        await pool.end();
         return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        await pool.end();
     }
 }
 
@@ -25,14 +29,14 @@ async function getToppings(req, res) {
     const pool = await connectToDB();
     try {
         const [rows, fields] = await pool.execute("SELECT * FROM Toppings");
-        await pool.end();
+
         return res
             .status(200)
             .json({ status: 200, message: "success", data: rows });
     } catch (error) {
-        await pool.end();
-
         return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        await pool.end();
     }
 }
 

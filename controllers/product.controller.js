@@ -12,7 +12,6 @@ async function getProducts(req, res) {
                 `SELECT Products.*, Categories.category_name FROM Products JOIN Categories ON Products.category_id = Categories.id WHERE name LIKE '%${searchName}%'`
             );
 
-            await pool.end();
             return res
                 .status(200)
                 .json({ status: 200, message: "success", data: rows });
@@ -21,15 +20,14 @@ async function getProducts(req, res) {
                 `SELECT Products.*, Categories.category_name FROM Products JOIN Categories ON Products.category_id = Categories.id WHERE Categories.id = '${category_id}' AND name LIKE '%${searchName}%'`
             );
 
-            await pool.end();
             return res
                 .status(200)
                 .json({ status: 200, message: "success", data: rows });
         }
     } catch (error) {
-        await pool.end();
-
         return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        await pool.end();
     }
 }
 
@@ -40,14 +38,14 @@ async function getProduct(req, res) {
         const [rows, fields] = await pool.query(
             `SELECT Products.*, Categories.category_name FROM Products JOIN Categories ON Products.category_id = Categories.id WHERE Products.id = '${product_id}'`
         );
-        await pool.end();
+
         return res
             .status(200)
             .json({ status: 200, message: "success", data: rows[0] });
     } catch (error) {
-        await pool.end();
-
         return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        await pool.end();
     }
 }
 
@@ -96,15 +94,15 @@ async function createProduct(req, res) {
         );
         await pool.commit();
 
-        await pool.end();
         return res
             .status(200)
             .json({ status: 200, message: "success", data: rows[0] });
     } catch (error) {
         await pool.rollback();
-        await pool.end();
 
         return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        await pool.end();
     }
 }
 
@@ -226,16 +224,16 @@ async function editProduct(req, res) {
         );
 
         await pool.commit();
-        await pool.end();
 
         return res
             .status(200)
             .json({ status: 200, message: "success", data: rows[0] });
     } catch (error) {
         await pool.rollback();
-        await pool.end();
 
         return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        await pool.end();
     }
 }
 
@@ -272,9 +270,10 @@ async function deleteProduct(req, res) {
         });
     } catch (error) {
         await pool.rollback();
-        await pool.end();
 
         return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        await pool.end();
     }
 }
 
@@ -288,12 +287,13 @@ async function getProductSizes(req, res) {
             [product_id]
         );
 
-        await pool.end();
         return res
             .status(200)
             .json({ status: 200, message: "success", data: rows });
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        await pool.end();
     }
 }
 
@@ -307,12 +307,13 @@ async function getProductToppings(req, res) {
             [product_id]
         );
 
-        await pool.end();
         return res
             .status(200)
             .json({ status: 200, message: "success", data: rows });
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        await pool.end();
     }
 }
 

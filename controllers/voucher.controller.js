@@ -68,9 +68,15 @@ async function createVoucher(req, res) {
         applicable_users,
     } = req.body;
 
-    const _applicable_stores = JSON.stringify(applicable_stores);
-    const _applicable_users = JSON.stringify(applicable_users);
-    const _applicable_products = JSON.stringify(applicable_products);
+    const _applicable_stores = applicable_stores
+        ? JSON.stringify(applicable_stores)
+        : null;
+    const _applicable_users = applicable_users
+        ? JSON.stringify(applicable_users)
+        : null;
+    const _applicable_products = applicable_products
+        ? JSON.stringify(applicable_products)
+        : null;
 
     try {
         await pool.beginTransaction();
@@ -96,15 +102,16 @@ async function createVoucher(req, res) {
         );
 
         await pool.commit();
-        await pool.end();
+
         return res
             .status(200)
             .json({ status: 200, message: "success", data: rows[0] });
     } catch (error) {
         await pool.rollback();
-        await pool.end();
 
         return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        await pool.end();
     }
 }
 
@@ -154,14 +161,13 @@ async function editVoucher(req, res) {
             `SELECT * FROM Vouchers WHERE id = '${voucher_id}'`
         );
 
-        await pool.end();
         return res
             .status(200)
             .json({ status: 200, message: "success", data: rows[0] });
     } catch (error) {
-        await pool.end();
-
         return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        await pool.end();
     }
 }
 

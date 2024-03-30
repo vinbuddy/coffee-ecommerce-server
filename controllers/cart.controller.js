@@ -10,7 +10,7 @@ async function addToCart(req, res) {
 
         const [result] = await pool.query(
             "INSERT INTO CartItems (user_id, product_id, quantity, size_id) VALUES (?, ?, ?, ?)",
-            [user_id, product_id, quantity, size_id]
+            [user_id, product_id, quantity, size_id || null]
         );
 
         if (toppings && toppings.length > 0) {
@@ -22,29 +22,49 @@ async function addToCart(req, res) {
             }
         }
 
-        const [cart] = await pool.query(
-            `SELECT 
+        let cartQuery = "";
+
+        if (!size_id) {
+            cartQuery = `SELECT
             ci.id,
             p.id AS product_id,
             p.name AS product_name,
             p.price AS product_price,
             p.image AS product_image,
-            s.size_name AS size,
+            ci.quantity AS quantity
+            FROM
+                CartItems ci
+            JOIN
+                Products p ON ci.product_id = p.id
+            WHERE
+                ci.id = '${result.insertId}'
+            GROUP BY
+                ci.id, p.name, p.price, p.image, ci.quantity;`;
+        } else {
+            cartQuery = `SELECT
+            ci.id,
+            p.id AS product_id,
+            p.name AS product_name,
+            p.price AS product_price,
+            p.image AS product_image,
+            s.size_name AS size_name,
             ps.size_price AS size_price,
             ci.quantity AS quantity
-            FROM 
+            FROM
                 CartItems ci
-            JOIN 
+            JOIN
                 Products p ON ci.product_id = p.id
-            JOIN 
+            JOIN
                 ProductSizes ps ON ci.product_id = ps.product_id AND ci.size_id = ps.size_id
-            JOIN 
+            JOIN
                 Sizes s ON ci.size_id = s.id
             WHERE
-                ci.id = '${result.insertId}'  
+                ci.id = '${result.insertId}'
             GROUP BY
-                ci.id, p.name, p.price, p.image, s.size_name, ps.size_price, ci.quantity;`
-        );
+                ci.id, p.name, p.price, p.image, s.size_name, ps.size_price, ci.quantity;`;
+        }
+
+        const [cart] = await pool.query(cartQuery);
 
         const [cartToppings] = await pool.query(
             `SELECT
@@ -59,30 +79,44 @@ async function addToCart(req, res) {
                 ts.cart_item_id = '${result.insertId}' `
         );
 
-        const cartItem = {
-            ...cart[0],
-            toppings: cartToppings,
-            total_item_price:
-                (cartToppings.reduce(
-                    (acc, curr) => acc + parseFloat(curr.topping_price),
-                    0
-                ) +
+        let cartItem;
+
+        if (size_id || cartToppings.length > 0) {
+            let total_topping_price = cartToppings.reduce(
+                (acc, curr) => acc + parseFloat(curr.topping_price),
+                0
+            );
+
+            cartItem = {
+                ...cart[0],
+                toppings: cartToppings.length > 0 ? cartToppings : [],
+                total_item_price:
+                    total_topping_price +
                     parseFloat(cart[0].product_price) +
-                    parseFloat(cart[0].size_price)) *
-                parseFloat(cart[0].quantity),
-        };
+                    parseFloat(cart[0].size_price) *
+                        parseFloat(cart[0].quantity),
+            };
+        } else {
+            cartItem = {
+                ...cart[0],
+                toppings: null,
+                total_item_price:
+                    parseFloat(cart[0].quantity) *
+                    parseFloat(cart[0].product_price),
+            };
+        }
 
         await pool.commit();
-        await pool.end();
 
         return res
             .status(200)
             .json({ status: 200, message: "success", data: cartItem });
     } catch (error) {
         await pool.rollback();
-        await pool.commit();
 
         return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        await pool.end();
     }
 }
 
@@ -94,6 +128,7 @@ async function getUserCart(req, res) {
         await pool.beginTransaction();
 
         const userCart = [];
+        let cartItem;
 
         const [carts] = await pool.query(
             `SELECT 
@@ -102,16 +137,16 @@ async function getUserCart(req, res) {
             p.name AS product_name,
             p.price AS product_price,
             p.image AS product_image,
-            s.size_name AS size,
+            s.size_name AS size_name,
             ps.size_price AS size_price,
             ci.quantity AS quantity
             FROM 
                 CartItems ci
             JOIN 
                 Products p ON ci.product_id = p.id
-            JOIN 
+            LEFT JOIN
                 ProductSizes ps ON ci.product_id = ps.product_id AND ci.size_id = ps.size_id
-            JOIN 
+            LEFT JOIN 
                 Sizes s ON ci.size_id = s.id
             WHERE
                 ci.user_id = '${user_id}'  
@@ -133,31 +168,43 @@ async function getUserCart(req, res) {
                     ts.cart_item_id = '${cart.id}' `
             );
 
-            userCart.push({
-                ...cart,
-                toppings: cartToppings,
-                total_item_price:
-                    (cartToppings.reduce(
-                        (acc, curr) => acc + parseFloat(curr.topping_price),
-                        0
-                    ) +
-                        parseFloat(cart.product_price) +
-                        parseFloat(cart.size_price)) *
-                    parseFloat(cart.quantity),
-            });
-        }
+            if (cart.size_id || cartToppings.length > 0) {
+                let total_topping_price = cartToppings.reduce(
+                    (acc, curr) => acc + parseFloat(curr.topping_price),
+                    0
+                );
 
+                cartItem = {
+                    ...cart,
+                    toppings: cartToppings.length > 0 ? cartToppings : null,
+                    total_item_price:
+                        total_topping_price +
+                        parseFloat(cart.product_price) +
+                        parseFloat(cart.size_price) * parseFloat(cart.quantity),
+                };
+            } else {
+                cartItem = {
+                    ...cart,
+                    toppings: null,
+                    total_item_price:
+                        parseFloat(cart.quantity) *
+                        parseFloat(cart.product_price),
+                };
+            }
+
+            userCart.push(cartItem);
+        }
         await pool.commit();
-        await pool.end();
 
         return res
             .status(200)
             .json({ status: 200, message: "success", data: userCart });
     } catch (error) {
         await pool.rollback();
-        await pool.commit();
 
         return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        await pool.end();
     }
 }
 
@@ -171,7 +218,7 @@ async function editCart(req, res) {
 
         await pool.query(
             "UPDATE CartItems SET size_id = ?, quantity = ? WHERE id = ?",
-            [size_id, quantity, cart_item_id]
+            [size_id || null, quantity, cart_item_id]
         );
 
         const [cartItemToppingCount] = await pool.query(
@@ -183,32 +230,52 @@ async function editCart(req, res) {
 
         const toppingCount = cartItemToppingCount[0].count;
 
-        if (toppings.length < toppingCount) {
-            await pool.query(
-                "DELETE FROM ToppingStorages WHERE cart_item_id = ? AND topping_id NOT IN (?)",
-                [cart_item_id, toppings]
-            );
-        } else {
-            const [rows] = await pool.query(
-                `SELECT topping_id FROM ToppingStorages WHERE cart_item_id = '${cart_item_id}'`
-            );
-
-            const existingToppings = rows.map((row) => row.topping_id);
-
-            const newToppings = toppings.filter(
-                (topping) => !existingToppings.includes(topping)
-            );
-
-            for (const topping of newToppings) {
+        if (toppings) {
+            if (toppings.length < toppingCount) {
                 await pool.query(
-                    "INSERT INTO ToppingStorages (cart_item_id, topping_id) VALUES (?, ?)",
-                    [cart_item_id, topping]
+                    "DELETE FROM ToppingStorages WHERE cart_item_id = ? AND topping_id NOT IN (?)",
+                    [cart_item_id, toppings]
                 );
+            } else {
+                const [rows] = await pool.query(
+                    `SELECT topping_id FROM ToppingStorages WHERE cart_item_id = '${cart_item_id}'`
+                );
+
+                const existingToppings = rows.map((row) => row.topping_id);
+
+                const newToppings = toppings.filter(
+                    (topping) => !existingToppings.includes(topping)
+                );
+
+                for (const topping of newToppings) {
+                    await pool.query(
+                        "INSERT INTO ToppingStorages (cart_item_id, topping_id) VALUES (?, ?)",
+                        [cart_item_id, topping]
+                    );
+                }
             }
         }
 
-        const [cart] = await pool.query(
-            `SELECT 
+        let cartQuery = "";
+
+        if (!size_id) {
+            cartQuery = `SELECT 
+            ci.id,
+            p.id AS product_id,
+            p.name AS product_name,
+            p.price AS product_price,
+            p.image AS product_image,
+            ci.quantity AS quantity
+            FROM 
+                CartItems ci
+            JOIN 
+                Products p ON ci.product_id = p.id
+            WHERE
+                ci.id = '${cart_item_id}'  
+            GROUP BY
+                ci.id, p.name, p.price, p.image, ci.quantity;`;
+        } else {
+            cartQuery = `SELECT 
             ci.id,
             p.id AS product_id,
             p.name AS product_name,
@@ -228,8 +295,10 @@ async function editCart(req, res) {
             WHERE
                 ci.id = '${cart_item_id}'  
             GROUP BY
-                ci.id, p.name, p.price, p.image, s.size_name, ps.size_price, ci.quantity;`
-        );
+                ci.id, p.name, p.price, p.image, s.size_name, ps.size_price, ci.quantity;`;
+        }
+
+        const [cart] = await pool.query(cartQuery);
 
         const [cartToppings] = await pool.query(
             `SELECT
@@ -244,30 +313,38 @@ async function editCart(req, res) {
                 ts.cart_item_id = '${cart_item_id}' `
         );
 
-        const cartItem = {
-            ...cart[0],
-            toppings: cartToppings,
-            total_item_price:
-                (cartToppings.reduce(
-                    (acc, curr) => acc + parseFloat(curr.topping_price),
-                    0
-                ) +
+        let cartItem;
+
+        if (size_id || cartToppings.length > 0) {
+            let total_topping_price = cartToppings.reduce(
+                (acc, curr) => acc + parseFloat(curr.topping_price),
+                0
+            );
+
+            cartItem = {
+                ...cart[0],
+                toppings: cartToppings.length > 0 ? cartToppings : [],
+                total_item_price:
+                    total_topping_price +
                     parseFloat(cart[0].product_price) +
-                    parseFloat(cart[0].size_price)) *
-                parseFloat(cart[0].quantity),
-        };
+                    parseFloat(cart[0].size_price) *
+                        parseFloat(cart[0].quantity),
+            };
+        } else {
+            cartItem = cart[0];
+        }
 
         await pool.commit();
-        await pool.end();
 
         return res
             .status(200)
             .json({ status: 200, message: "success", data: cartItem });
     } catch (error) {
         await pool.rollback();
-        await pool.commit();
 
         return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        await pool.end();
     }
 }
 
@@ -294,7 +371,6 @@ async function deleteCart(req, res) {
         }
 
         await pool.commit();
-        await pool.end();
 
         return res.status(200).json({
             status: 200,
@@ -302,9 +378,10 @@ async function deleteCart(req, res) {
         });
     } catch (error) {
         await pool.rollback();
-        await pool.commit();
 
         return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        await pool.end();
     }
 }
 

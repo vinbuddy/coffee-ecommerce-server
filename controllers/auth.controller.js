@@ -60,9 +60,9 @@ async function createUserAccount(req, res) {
         }
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        await pool.end();
     }
-
-    await pool.end();
 }
 
 async function loginToStore(req, res) {
@@ -88,12 +88,13 @@ async function loginToStore(req, res) {
                 .send({ status: 404, message: "Password is not valid" });
         }
 
-        await pool.end();
         return res
             .status(200)
             .json({ status: 200, message: "success", data: store_accounts[0] });
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        await pool.end();
     }
 }
 
@@ -109,13 +110,15 @@ async function createStoreAccount(req, res) {
             "INSERT INTO StoreAccounts (store_id, password) VALUES (?, ?)",
             [store_id, passwordHashed]
         );
-        await pool.end();
+
         return res.status(200).json({
             status: 200,
             message: "success",
         });
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        await pool.end();
     }
 }
 

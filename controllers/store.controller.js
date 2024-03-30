@@ -33,12 +33,13 @@ async function createStore(req, res) {
             `SELECT * FROM Stores WHERE id = '${result.insertId}'`
         );
 
-        await pool.end();
         return res
             .status(200)
             .json({ status: 200, message: "success", data: rows[0] });
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        await pool.end();
     }
 }
 
@@ -77,12 +78,13 @@ async function editStore(req, res) {
             `SELECT * FROM Stores WHERE id = '${store_id}'`
         );
 
-        await pool.end();
         return res
             .status(200)
             .json({ status: 200, message: "success", data: rows[0] });
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        await pool.end();
     }
 }
 
@@ -90,14 +92,13 @@ async function getStores(req, res) {
     const pool = await connectToDB();
     try {
         const [rows, fields] = await pool.execute("SELECT * FROM Stores");
-        await pool.end();
         return res
             .status(200)
             .json({ status: 200, message: "success", data: rows });
     } catch (error) {
-        await pool.end();
-
         return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        await pool.end();
     }
 }
 
