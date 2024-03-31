@@ -4,6 +4,8 @@ async function addToCart(req, res) {
     const pool = await connectToDB();
 
     try {
+        let cartItem;
+        let cartQuery = "";
         const { user_id, product_id, quantity, size_id, toppings } = req.body;
 
         await pool.beginTransaction();
@@ -21,8 +23,6 @@ async function addToCart(req, res) {
                 );
             }
         }
-
-        let cartQuery = "";
 
         if (!size_id) {
             cartQuery = `SELECT
@@ -79,8 +79,6 @@ async function addToCart(req, res) {
                 ts.cart_item_id = '${result.insertId}' `
         );
 
-        let cartItem;
-
         if (size_id || cartToppings.length > 0) {
             let total_topping_price = cartToppings.reduce(
                 (acc, curr) => acc + parseFloat(curr.topping_price),
@@ -131,7 +129,7 @@ async function getUserCart(req, res) {
         let cartItem;
 
         const [carts] = await pool.query(
-            `SELECT 
+            `SELECT
             ci.id,
             p.id AS product_id,
             p.name AS product_name,
@@ -140,16 +138,16 @@ async function getUserCart(req, res) {
             s.size_name AS size_name,
             ps.size_price AS size_price,
             ci.quantity AS quantity
-            FROM 
+            FROM
                 CartItems ci
-            JOIN 
+            JOIN
                 Products p ON ci.product_id = p.id
             LEFT JOIN
                 ProductSizes ps ON ci.product_id = ps.product_id AND ci.size_id = ps.size_id
-            LEFT JOIN 
+            LEFT JOIN
                 Sizes s ON ci.size_id = s.id
             WHERE
-                ci.user_id = '${user_id}'  
+                ci.user_id = '${user_id}'
             GROUP BY
                 ci.id, p.name, p.price, p.image, s.size_name, ps.size_price, ci.quantity;`
         );
