@@ -15,6 +15,7 @@ import paymentRoutes from "./routes/payment.route.js";
 import voucherRoutes from "./routes/voucher.route.js";
 import orderRoutes from "./routes/order.route.js";
 import wishlistRoutes from "./routes/wishlist.route.js";
+import reviewRoutes from "./routes/review.route.js";
 
 env.config();
 
@@ -40,6 +41,7 @@ app.use("/payment", paymentRoutes);
 app.use("/voucher", voucherRoutes);
 app.use("/order", orderRoutes);
 app.use("/wishlist", wishlistRoutes);
+app.use("/review", reviewRoutes);
 
 app.listen(port, () => {
     console.log(`running on http://localhost:${port}`);

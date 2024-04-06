@@ -3,26 +3,34 @@ import connectToDB from "../config/db.js";
 async function getProducts(req, res) {
     const pool = await connectToDB();
     try {
-        const searchName = req.params.name || "";
-        const category_id = req.params.category_id || 0;
+        const searchName = req.query.name || "";
+        const category_id = req.query.category_id || 0;
+
+        let sql = ``;
 
         // Get all product
-        if (category_id === 0) {
-            const [rows, fields] = await pool.query(
-                `SELECT Products.*, Categories.category_name FROM Products JOIN Categories ON Products.category_id = Categories.id WHERE name LIKE '%${searchName}%'`
-            );
+        if (category_id == 0) {
+            sql =
+                searchName === ""
+                    ? "SELECT Products.*, Categories.category_name FROM Products  INNER JOIN Categories ON Products.category_id = Categories.id"
+                    : `SELECT Products.*, Categories.category_name FROM Products  INNER JOIN Categories ON Products.category_id = Categories.id WHERE name LIKE '%${searchName}%'`;
+
+            const [rows, fields] = await pool.query(sql);
 
             return res
                 .status(200)
-                .json({ status: 200, message: "success", data: rows });
+                .json({ status: 200, message: "success 123", data: rows });
         } else {
-            const [rows, fields] = await pool.query(
-                `SELECT Products.*, Categories.category_name FROM Products JOIN Categories ON Products.category_id = Categories.id WHERE Categories.id = '${category_id}' AND name LIKE '%${searchName}%'`
-            );
+            sql =
+                searchName === ""
+                    ? `SELECT Products.*, Categories.category_name FROM Products  INNER JOIN Categories ON Products.category_id = Categories.id WHERE Products.category_id = '${category_id}'`
+                    : `SELECT Products.*, Categories.category_name FROM Products  INNER JOIN Categories ON Products.category_id = Categories.id WHERE Products.category_id = '${category_id}' AND name LIKE '%${searchName}%'`;
+
+            const [rows, fields] = await pool.query(sql);
 
             return res
                 .status(200)
-                .json({ status: 200, message: "success", data: rows });
+                .json({ status: 200, message: "success 345", data: rows });
         }
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });
