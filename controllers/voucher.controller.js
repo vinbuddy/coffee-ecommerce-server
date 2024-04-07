@@ -5,12 +5,12 @@ async function getVouchers(req, res) {
     try {
         const [rows] = await pool.query("SELECT * FROM Vouchers");
 
-        await pool.end();
+        if (pool) await pool.end();
         return res
             .status(200)
             .json({ status: 200, message: "success", data: rows });
     } catch (error) {
-        await pool.end();
+        if (pool) await pool.end();
 
         return res.status(500).json({ status: 500, message: error.message });
     }
@@ -41,12 +41,12 @@ async function getUserVouchers(req, res) {
             [JSON.stringify(user_id)]
         );
 
-        await pool.end();
+        if (pool) await pool.end();
         return res
             .status(200)
             .json({ status: 200, message: "success", data: rows });
     } catch (error) {
-        await pool.end();
+        if (pool) await pool.end();
 
         return res.status(500).json({ status: 500, message: error.message });
     }
@@ -111,7 +111,7 @@ async function createVoucher(req, res) {
 
         return res.status(500).json({ status: 500, message: error.message });
     } finally {
-        await pool.end();
+        if (pool) await pool.end();
     }
 }
 
@@ -167,7 +167,7 @@ async function editVoucher(req, res) {
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });
     } finally {
-        await pool.end();
+        if (pool) await pool.end();
     }
 }
 

@@ -12,7 +12,7 @@ async function getUsers(req, res) {
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });
     } finally {
-        await pool.end();
+        if (pool) await pool.end();
     }
 }
 
@@ -31,7 +31,7 @@ async function getUser(req, res) {
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });
     } finally {
-        await pool.end();
+        if (pool) await pool.end();
     }
 }
 

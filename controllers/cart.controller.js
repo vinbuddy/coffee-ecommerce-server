@@ -114,7 +114,7 @@ async function addToCart(req, res) {
 
         return res.status(500).json({ status: 500, message: error.message });
     } finally {
-        await pool.end();
+        if (pool) await pool.end();
     }
 }
 
@@ -202,7 +202,7 @@ async function getUserCart(req, res) {
 
         return res.status(500).json({ status: 500, message: error.message });
     } finally {
-        await pool.end();
+        if (pool) await pool.end();
     }
 }
 
@@ -342,7 +342,7 @@ async function editCart(req, res) {
 
         return res.status(500).json({ status: 500, message: error.message });
     } finally {
-        await pool.end();
+        if (pool) await pool.end();
     }
 }
 
@@ -379,7 +379,7 @@ async function deleteCart(req, res) {
 
         return res.status(500).json({ status: 500, message: error.message });
     } finally {
-        await pool.end();
+        if (pool) await pool.end();
     }
 }
 

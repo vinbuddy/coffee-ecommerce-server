@@ -22,7 +22,7 @@ async function getReviews(req, res) {
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });
     } finally {
-        await pool.end();
+        if (pool) await pool.end();
     }
 }
 
@@ -77,7 +77,7 @@ async function getProductReviews(req, res) {
         await pool.rollback();
         return res.status(500).json({ status: 500, message: error.message });
     } finally {
-        await pool.end();
+        if (pool) await pool.end();
     }
 }
 
@@ -105,7 +105,7 @@ async function createReview(req, res) {
         await pool.rollback();
         return res.status(500).json({ status: 500, message: error.message });
     } finally {
-        await pool.end();
+        if (pool) await pool.end();
     }
 }
 

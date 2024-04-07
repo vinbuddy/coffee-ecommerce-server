@@ -14,7 +14,7 @@ async function createCategory(req, res) {
         const [rows] = await pool.query(
             `SELECT * FROM Categories WHERE id = '${result.insertId}'`
         );
-        await pool.end();
+        if (pool) await pool.end();
         return res
             .status(200)
             .json({ status: 200, message: "success", data: rows[0] });
@@ -36,7 +36,7 @@ async function editCategory(req, res) {
         );
 
         if (result.affectedRows === 0) {
-            await pool.end();
+            if (pool) await pool.end();
             return res
                 .status(200)
                 .json({ status: 200, message: "Update category failed" });
@@ -45,12 +45,12 @@ async function editCategory(req, res) {
         const [rows] = await pool.query(
             `SELECT * FROM Categories WHERE id = '${category_id}'`
         );
-        await pool.end();
+        if (pool) await pool.end();
         return res
             .status(200)
             .json({ status: 200, message: "success", data: rows[0] });
     } catch (error) {
-        await pool.end();
+        if (pool) await pool.end();
         return res.status(500).json({ status: 500, message: error.message });
     }
 }
@@ -59,12 +59,12 @@ async function getCategories(req, res) {
     const pool = await connectToDB();
     try {
         const [rows, fields] = await pool.execute("SELECT * FROM Categories");
-        await pool.end();
+        if (pool) await pool.end();
         return res
             .status(200)
             .json({ status: 200, message: "success", data: rows });
     } catch (error) {
-        await pool.end();
+        if (pool) await pool.end();
 
         return res.status(500).json({ status: 500, message: error.message });
     }

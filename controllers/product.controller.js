@@ -35,7 +35,7 @@ async function getProducts(req, res) {
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });
     } finally {
-        await pool.end();
+        if (pool) await pool.end();
     }
 }
 
@@ -53,7 +53,7 @@ async function getProduct(req, res) {
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });
     } finally {
-        await pool.end();
+        if (pool) await pool.end();
     }
 }
 
@@ -110,7 +110,7 @@ async function createProduct(req, res) {
 
         return res.status(500).json({ status: 500, message: error.message });
     } finally {
-        await pool.end();
+        if (pool) await pool.end();
     }
 }
 
@@ -241,7 +241,7 @@ async function editProduct(req, res) {
 
         return res.status(500).json({ status: 500, message: error.message });
     } finally {
-        await pool.end();
+        if (pool) await pool.end();
     }
 }
 
@@ -281,7 +281,7 @@ async function deleteProduct(req, res) {
 
         return res.status(500).json({ status: 500, message: error.message });
     } finally {
-        await pool.end();
+        if (pool) await pool.end();
     }
 }
 
@@ -301,7 +301,7 @@ async function getProductSizes(req, res) {
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });
     } finally {
-        await pool.end();
+        if (pool) await pool.end();
     }
 }
 
@@ -321,7 +321,7 @@ async function getProductToppings(req, res) {
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });
     } finally {
-        await pool.end();
+        if (pool) await pool.end();
     }
 }
 
