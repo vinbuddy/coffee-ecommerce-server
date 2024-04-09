@@ -383,4 +383,27 @@ async function deleteCart(req, res) {
     }
 }
 
-export { addToCart, editCart, getUserCart, deleteCart };
+async function getTotalItemUserCart(req, res) {
+    const pool = await connectToDB();
+
+    try {
+        const user_id = req.params.user_id;
+
+        const [result] = await pool.query(
+            `SELECT COUNT(*) AS 'count'
+            FROM ToppingStorages 
+            WHERE user_id = '${user_id}'
+            `
+        );
+
+        return res
+            .status(200)
+            .json({ status: 200, message: "success", data: result[0].count });
+    } catch (error) {
+        return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        if (pool) await pool.end();
+    }
+}
+
+export { addToCart, editCart, getUserCart, deleteCart, getTotalItemUserCart };
