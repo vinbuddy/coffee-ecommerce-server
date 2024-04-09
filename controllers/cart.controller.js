@@ -391,7 +391,7 @@ async function getTotalItemUserCart(req, res) {
 
         const [result] = await pool.query(
             `SELECT COUNT(*) AS 'count'
-            FROM ToppingStorages 
+            FROM CartItems 
             WHERE user_id = '${user_id}'
             `
         );
