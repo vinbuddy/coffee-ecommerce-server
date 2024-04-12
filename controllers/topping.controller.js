@@ -2,6 +2,13 @@ import connectToDB from "../config/db.js";
 
 async function createTopping(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
 
     try {
         const { topping_name, topping_price } = req.body;
@@ -27,6 +34,13 @@ async function createTopping(req, res) {
 
 async function getToppings(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
     try {
         const [rows, fields] = await pool.execute("SELECT * FROM Toppings");
 

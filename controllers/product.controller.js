@@ -2,6 +2,13 @@ import connectToDB from "../config/db.js";
 
 async function getProducts(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
     try {
         const searchName = req.query.name || "";
         const category_id = req.query.category_id || 0;
@@ -41,6 +48,13 @@ async function getProducts(req, res) {
 
 async function getProduct(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
     try {
         const product_id = req.params.id;
         const [rows, fields] = await pool.query(
@@ -59,6 +73,13 @@ async function getProduct(req, res) {
 
 async function createProduct(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
     try {
         const {
             name,
@@ -116,6 +137,13 @@ async function createProduct(req, res) {
 
 async function editProduct(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
     try {
         const product_id = req.params.id;
         const {
@@ -247,6 +275,13 @@ async function editProduct(req, res) {
 
 async function deleteProduct(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
 
     try {
         await pool.beginTransaction();
@@ -287,6 +322,13 @@ async function deleteProduct(req, res) {
 
 async function getProductSizes(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
     const product_id = req.params.id;
 
     try {
@@ -307,6 +349,13 @@ async function getProductSizes(req, res) {
 
 async function getProductToppings(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
     const product_id = req.params.id;
 
     try {

@@ -2,6 +2,13 @@ import connectToDB from "../config/db.js";
 
 async function getUserWishList(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
 
     try {
         await pool.beginTransaction();
@@ -27,6 +34,13 @@ async function getUserWishList(req, res) {
 
 async function addToWishList(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
 
     try {
         const { product_id, user_id } = req.body;
@@ -58,6 +72,13 @@ async function addToWishList(req, res) {
 
 async function deleteItemInWishList(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
 
     try {
         const wishlist_item_id = req.params.id;

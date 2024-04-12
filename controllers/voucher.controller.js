@@ -2,6 +2,13 @@ import connectToDB from "../config/db.js";
 
 async function getVouchers(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
     try {
         const [rows] = await pool.query("SELECT * FROM Vouchers");
 
@@ -18,6 +25,13 @@ async function getVouchers(req, res) {
 
 async function getVoucher(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
     try {
         const voucher_id = req.params.id;
         const [rows] = await pool.query(
@@ -34,6 +48,13 @@ async function getVoucher(req, res) {
 
 async function getUserVouchers(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
     const user_id = req.params.user_id;
     try {
         const [rows] = await pool.query(
@@ -54,6 +75,13 @@ async function getUserVouchers(req, res) {
 
 async function createVoucher(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
     const {
         voucher_name,
         description,
@@ -117,6 +145,13 @@ async function createVoucher(req, res) {
 
 async function editVoucher(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
 
     const voucher_id = req.params.id;
 

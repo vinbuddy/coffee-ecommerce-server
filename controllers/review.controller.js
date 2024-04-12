@@ -5,6 +5,13 @@ const MAX_STAR_RATING = 5;
 
 async function getReviews(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
 
     try {
         const rating = req.query.rating;
@@ -28,6 +35,13 @@ async function getReviews(req, res) {
 
 async function getProductReviews(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
 
     try {
         await pool.beginTransaction();
@@ -83,6 +97,13 @@ async function getProductReviews(req, res) {
 
 async function createReview(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
 
     try {
         await pool.beginTransaction();

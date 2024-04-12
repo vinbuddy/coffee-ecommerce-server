@@ -2,6 +2,13 @@ import connectToDB from "../config/db.js";
 
 async function createStore(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
 
     try {
         const {
@@ -45,6 +52,13 @@ async function createStore(req, res) {
 
 async function editStore(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
     const store_id = req.params.id;
 
     try {
@@ -90,6 +104,13 @@ async function editStore(req, res) {
 
 async function getStores(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
     try {
         const [rows, fields] = await pool.execute("SELECT * FROM Stores");
         return res

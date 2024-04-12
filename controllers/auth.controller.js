@@ -8,6 +8,13 @@ async function createUserAccount(req, res) {
     let isExisted = false;
 
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
 
     try {
         const [rows, fields] = await pool.execute(
@@ -67,6 +74,13 @@ async function createUserAccount(req, res) {
 
 async function loginToStore(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
     try {
         const { store_id, password } = req.body;
 
@@ -100,6 +114,13 @@ async function loginToStore(req, res) {
 
 async function createStoreAccount(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
     try {
         const { store_id, password } = req.body;
 

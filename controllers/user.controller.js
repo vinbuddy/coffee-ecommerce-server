@@ -2,6 +2,13 @@ import connectToDB from "../config/db.js";
 
 async function getUsers(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
 
     try {
         const [rows, fields] = await pool.execute("SELECT * FROM Users");
@@ -19,6 +26,13 @@ async function getUsers(req, res) {
 async function getUser(req, res) {
     const user_id = req.params.id;
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
 
     try {
         const [rows, fields] = await pool.execute(

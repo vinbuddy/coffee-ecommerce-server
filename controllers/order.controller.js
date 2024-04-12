@@ -2,6 +2,13 @@ import connectToDB from "../config/db.js";
 
 async function getOrders(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
     try {
         const [rows] = await pool.execute(
             `SELECT Orders.*, Users.id AS user_id, Users.user_name, Users.email, Users.avatar
@@ -21,6 +28,13 @@ async function getOrders(req, res) {
 
 async function getUserOrders(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
     const user_id = req.params.user_id;
 
     try {
@@ -43,6 +57,13 @@ async function getUserOrders(req, res) {
 
 async function getOrderInfo(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
     try {
         await pool.beginTransaction();
         const orderDetailData = [];
@@ -131,6 +152,13 @@ async function getOrderInfo(req, res) {
 
 async function createOrder(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
     try {
         const {
             order_id,
@@ -253,6 +281,13 @@ async function createOrder(req, res) {
 
 async function editOrderStatus(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
 
     try {
         const order_id = req.params.id;

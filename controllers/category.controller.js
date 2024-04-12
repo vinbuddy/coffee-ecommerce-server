@@ -2,6 +2,13 @@ import connectToDB from "../config/db.js";
 
 async function createCategory(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
 
     try {
         const { category_name } = req.body;
@@ -25,6 +32,13 @@ async function createCategory(req, res) {
 
 async function editCategory(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
 
     try {
         const { category_name } = req.body;
@@ -57,6 +71,13 @@ async function editCategory(req, res) {
 
 async function getCategories(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
     try {
         const [rows, fields] = await pool.execute("SELECT * FROM Categories");
         if (pool) await pool.end();

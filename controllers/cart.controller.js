@@ -2,6 +2,13 @@ import connectToDB from "../config/db.js";
 
 async function addToCart(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
 
     try {
         let cartItem;
@@ -121,6 +128,13 @@ async function addToCart(req, res) {
 
 async function getUserCart(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
 
     try {
         const user_id = req.params.user_id;
@@ -210,6 +224,13 @@ async function getUserCart(req, res) {
 
 async function editCart(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
 
     try {
         const cart_item_id = req.params.id;
@@ -351,6 +372,13 @@ async function editCart(req, res) {
 
 async function deleteCart(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
 
     try {
         await pool.beginTransaction();
@@ -388,6 +416,13 @@ async function deleteCart(req, res) {
 
 async function getTotalItemUserCart(req, res) {
     const pool = await connectToDB();
+    if (!pool)
+        return res
+            .status(500)
+            .json({
+                status: 500,
+                message: "Failed to connect to the database",
+            });
 
     try {
         const user_id = req.params.user_id;
