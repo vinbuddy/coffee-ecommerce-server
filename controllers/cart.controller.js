@@ -47,6 +47,7 @@ async function addToCart(req, res) {
             p.name AS product_name,
             p.price AS product_price,
             p.image AS product_image,
+            s.id AS size_id,
             s.size_name AS size_name,
             ps.size_price AS size_price,
             ci.quantity AS quantity
@@ -61,7 +62,7 @@ async function addToCart(req, res) {
             WHERE
                 ci.id = '${result.insertId}'
             GROUP BY
-                ci.id, p.name, p.price, p.image, s.size_name, ps.size_price, ci.quantity;`;
+                ci.id, p.name, p.price, p.image, s.id, s.size_name, ps.size_price, ci.quantity;`;
         }
 
         const [cart] = await pool.query(cartQuery);
@@ -135,6 +136,7 @@ async function getUserCart(req, res) {
             p.name AS product_name,
             p.price AS product_price,
             p.image AS product_image,
+            s.id AS size_id,
             s.size_name AS size_name,
             ps.size_price AS size_price,
             ci.quantity AS quantity
@@ -149,7 +151,7 @@ async function getUserCart(req, res) {
             WHERE
                 ci.user_id = '${user_id}'
             GROUP BY
-                ci.id, p.name, p.price, p.image, s.size_name, ps.size_price, ci.quantity;`
+                ci.id, p.name, p.price, p.image, s.id, s.size_name, ps.size_price, ci.quantity;`
         );
 
         for (const cart of carts) {
@@ -279,6 +281,7 @@ async function editCart(req, res) {
             p.name AS product_name,
             p.price AS product_price,
             p.image AS product_image,
+            s.id AS size_id,
             s.size_name AS size,
             ps.size_price AS size_price,
             ci.quantity AS quantity
@@ -293,7 +296,7 @@ async function editCart(req, res) {
             WHERE
                 ci.id = '${cart_item_id}'  
             GROUP BY
-                ci.id, p.name, p.price, p.image, s.size_name, ps.size_price, ci.quantity;`;
+                ci.id, p.name, p.price, p.image, s.id, s.size_name, ps.size_price, ci.quantity;`;
         }
 
         const [cart] = await pool.query(cartQuery);
