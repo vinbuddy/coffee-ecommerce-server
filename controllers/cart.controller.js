@@ -3,12 +3,10 @@ import connectToDB from "../config/db.js";
 async function addToCart(req, res) {
     const pool = await connectToDB();
     if (!pool)
-        return res
-            .status(500)
-            .json({
-                status: 500,
-                message: "Failed to connect to the database",
-            });
+        return res.status(500).json({
+            status: 500,
+            message: "Failed to connect to the database",
+        });
 
     try {
         let cartItem;
@@ -77,6 +75,7 @@ async function addToCart(req, res) {
         const [cartToppings] = await pool.query(
             `SELECT
             ts.id AS topping_storage_id,
+            t.id AS topping_id,
             t.topping_name,
             t.topping_price
             FROM
@@ -129,12 +128,10 @@ async function addToCart(req, res) {
 async function getUserCart(req, res) {
     const pool = await connectToDB();
     if (!pool)
-        return res
-            .status(500)
-            .json({
-                status: 500,
-                message: "Failed to connect to the database",
-            });
+        return res.status(500).json({
+            status: 500,
+            message: "Failed to connect to the database",
+        });
 
     try {
         const user_id = req.params.user_id;
@@ -172,6 +169,7 @@ async function getUserCart(req, res) {
             const [cartToppings] = await pool.query(
                 `SELECT
                 ts.id AS topping_storage_id,
+                t.id AS topping_id,
                 t.topping_name,
                 t.topping_price
                 FROM
@@ -192,9 +190,10 @@ async function getUserCart(req, res) {
                     ...cart,
                     toppings: cartToppings.length > 0 ? cartToppings : null,
                     total_item_price:
-                        total_topping_price +
-                        parseFloat(cart.product_price) +
-                        parseFloat(cart.size_price) * parseFloat(cart.quantity),
+                        (total_topping_price +
+                            parseFloat(cart.product_price) +
+                            parseFloat(cart.size_price)) *
+                        parseFloat(cart.quantity),
                 };
             } else {
                 cartItem = {
@@ -225,12 +224,10 @@ async function getUserCart(req, res) {
 async function editCart(req, res) {
     const pool = await connectToDB();
     if (!pool)
-        return res
-            .status(500)
-            .json({
-                status: 500,
-                message: "Failed to connect to the database",
-            });
+        return res.status(500).json({
+            status: 500,
+            message: "Failed to connect to the database",
+        });
 
     try {
         const cart_item_id = req.params.id;
@@ -251,7 +248,7 @@ async function editCart(req, res) {
 
         const toppingCount = cartItemToppingCount[0].count;
 
-        if (toppings) {
+        if (toppings && toppings.length > 0) {
             if (toppings.length < toppingCount) {
                 await pool.query(
                     "DELETE FROM ToppingStorages WHERE cart_item_id = ? AND topping_id NOT IN (?)",
@@ -275,6 +272,11 @@ async function editCart(req, res) {
                     );
                 }
             }
+        } else {
+            await pool.query(
+                "DELETE FROM ToppingStorages WHERE cart_item_id = ?",
+                [cart_item_id]
+            );
         }
 
         let cartQuery = "";
@@ -325,6 +327,7 @@ async function editCart(req, res) {
         const [cartToppings] = await pool.query(
             `SELECT
             ts.id AS topping_storage_id,
+            t.id AS topping_id,
             t.topping_name,
             t.topping_price
             FROM
@@ -373,12 +376,10 @@ async function editCart(req, res) {
 async function deleteCart(req, res) {
     const pool = await connectToDB();
     if (!pool)
-        return res
-            .status(500)
-            .json({
-                status: 500,
-                message: "Failed to connect to the database",
-            });
+        return res.status(500).json({
+            status: 500,
+            message: "Failed to connect to the database",
+        });
 
     try {
         await pool.beginTransaction();
@@ -417,12 +418,10 @@ async function deleteCart(req, res) {
 async function getTotalItemUserCart(req, res) {
     const pool = await connectToDB();
     if (!pool)
-        return res
-            .status(500)
-            .json({
-                status: 500,
-                message: "Failed to connect to the database",
-            });
+        return res.status(500).json({
+            status: 500,
+            message: "Failed to connect to the database",
+        });
 
     try {
         const user_id = req.params.user_id;
