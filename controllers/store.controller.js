@@ -3,12 +3,10 @@ import connectToDB from "../config/db.js";
 async function createStore(req, res) {
     const pool = await connectToDB();
     if (!pool)
-        return res
-            .status(500)
-            .json({
-                status: 500,
-                message: "Failed to connect to the database",
-            });
+        return res.status(500).json({
+            status: 500,
+            message: "Failed to connect to the database",
+        });
 
     try {
         const {
@@ -20,10 +18,11 @@ async function createStore(req, res) {
             google_map_location,
             open_time,
             close_time,
+            image,
         } = req.body;
 
         const [result] = await pool.query(
-            "INSERT INTO Stores (store_name, address, city, district, ward, google_map_location, open_time, close_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO Stores (store_name, address, city, district, ward, google_map_location, open_time, close_time, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
                 store_name,
                 address,
@@ -33,6 +32,7 @@ async function createStore(req, res) {
                 google_map_location,
                 open_time,
                 close_time,
+                image,
             ]
         );
 
@@ -53,12 +53,10 @@ async function createStore(req, res) {
 async function editStore(req, res) {
     const pool = await connectToDB();
     if (!pool)
-        return res
-            .status(500)
-            .json({
-                status: 500,
-                message: "Failed to connect to the database",
-            });
+        return res.status(500).json({
+            status: 500,
+            message: "Failed to connect to the database",
+        });
     const store_id = req.params.id;
 
     try {
@@ -71,10 +69,11 @@ async function editStore(req, res) {
             google_map_location,
             open_time,
             close_time,
+            image,
         } = req.body;
 
         const [result] = await pool.query(
-            "UPDATE Stores SET store_name = ?, address = ?, city = ?, district = ?, ward = ?, google_map_location = ?, open_time = ?, close_time = ? WHERE id = ?",
+            "UPDATE Stores SET store_name = ?, address = ?, city = ?, district = ?, ward = ?, google_map_location = ?, open_time = ?, close_time = ?, image = ? WHERE id = ?",
             [
                 store_name,
                 address,
@@ -84,6 +83,7 @@ async function editStore(req, res) {
                 google_map_location,
                 open_time,
                 close_time,
+                image,
                 store_id,
             ]
         );
@@ -102,17 +102,17 @@ async function editStore(req, res) {
     }
 }
 
-async function getStores(req, res) {
+async function getStoreLocations(req, res) {
     const pool = await connectToDB();
     if (!pool)
-        return res
-            .status(500)
-            .json({
-                status: 500,
-                message: "Failed to connect to the database",
-            });
+        return res.status(500).json({
+            status: 500,
+            message: "Failed to connect to the database",
+        });
     try {
-        const [rows, fields] = await pool.execute("SELECT * FROM Stores");
+        let sql =
+            "SELECT city, COUNT(*) AS store_count FROM Stores GROUP BY city";
+        const [rows, fields] = await pool.execute(sql);
         return res
             .status(200)
             .json({ status: 200, message: "success", data: rows });
@@ -123,4 +123,31 @@ async function getStores(req, res) {
     }
 }
 
-export { createStore, getStores, editStore };
+async function getStores(req, res) {
+    const pool = await connectToDB();
+    if (!pool)
+        return res.status(500).json({
+            status: 500,
+            message: "Failed to connect to the database",
+        });
+    try {
+        const city = req.query.city || "";
+
+        let sql = "SELECT * FROM Stores";
+
+        if (city.length > 0) {
+            sql = `SELECT * FROM Stores WHERE city LIKE '%${city}%'`;
+        }
+
+        const [rows, fields] = await pool.execute(sql);
+        return res
+            .status(200)
+            .json({ status: 200, message: "success", data: rows });
+    } catch (error) {
+        return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        if (pool) await pool.end();
+    }
+}
+
+export { createStore, getStores, editStore, getStoreLocations };
