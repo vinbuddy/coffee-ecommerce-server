@@ -9,40 +9,17 @@ async function createStore(req, res) {
         });
 
     try {
-        const {
-            store_name,
-            address,
-            city,
-            district,
-            ward,
-            google_map_location,
-            open_time,
-            close_time,
-            image,
-        } = req.body;
+        const { store_name, address, city, district, ward, google_map_location, open_time, close_time, image } =
+            req.body;
 
         const [result] = await pool.query(
             "INSERT INTO Stores (store_name, address, city, district, ward, google_map_location, open_time, close_time, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            [
-                store_name,
-                address,
-                city,
-                district,
-                ward,
-                google_map_location,
-                open_time,
-                close_time,
-                image,
-            ]
+            [store_name, address, city, district, ward, google_map_location, open_time, close_time, image]
         );
 
-        const [rows] = await pool.query(
-            `SELECT * FROM Stores WHERE id = '${result.insertId}'`
-        );
+        const [rows] = await pool.query(`SELECT * FROM Stores WHERE id = '${result.insertId}'`);
 
-        return res
-            .status(200)
-            .json({ status: 200, message: "success", data: rows[0] });
+        return res.status(200).json({ status: 200, message: "success", data: rows[0] });
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });
     } finally {
@@ -60,41 +37,17 @@ async function editStore(req, res) {
     const store_id = req.params.id;
 
     try {
-        const {
-            store_name,
-            address,
-            city,
-            district,
-            ward,
-            google_map_location,
-            open_time,
-            close_time,
-            image,
-        } = req.body;
+        const { store_name, address, city, district, ward, google_map_location, open_time, close_time, image } =
+            req.body;
 
         const [result] = await pool.query(
             "UPDATE Stores SET store_name = ?, address = ?, city = ?, district = ?, ward = ?, google_map_location = ?, open_time = ?, close_time = ?, image = ? WHERE id = ?",
-            [
-                store_name,
-                address,
-                city,
-                district,
-                ward,
-                google_map_location,
-                open_time,
-                close_time,
-                image,
-                store_id,
-            ]
+            [store_name, address, city, district, ward, google_map_location, open_time, close_time, image, store_id]
         );
 
-        const [rows] = await pool.query(
-            `SELECT * FROM Stores WHERE id = '${store_id}'`
-        );
+        const [rows] = await pool.query(`SELECT * FROM Stores WHERE id = '${store_id}'`);
 
-        return res
-            .status(200)
-            .json({ status: 200, message: "success", data: rows[0] });
+        return res.status(200).json({ status: 200, message: "success", data: rows[0] });
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });
     } finally {
@@ -110,12 +63,9 @@ async function getStoreLocations(req, res) {
             message: "Failed to connect to the database",
         });
     try {
-        let sql =
-            "SELECT city, COUNT(*) AS store_count FROM Stores GROUP BY city";
+        let sql = "SELECT city, COUNT(*) AS store_count FROM Stores GROUP BY city";
         const [rows, fields] = await pool.execute(sql);
-        return res
-            .status(200)
-            .json({ status: 200, message: "success", data: rows });
+        return res.status(200).json({ status: 200, message: "success", data: rows });
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });
     } finally {
@@ -140,9 +90,7 @@ async function getStores(req, res) {
         }
 
         const [rows, fields] = await pool.execute(sql);
-        return res
-            .status(200)
-            .json({ status: 200, message: "success", data: rows });
+        return res.status(200).json({ status: 200, message: "success", data: rows });
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });
     } finally {
@@ -150,4 +98,23 @@ async function getStores(req, res) {
     }
 }
 
-export { createStore, getStores, editStore, getStoreLocations };
+async function getStore(req, res) {
+    const pool = await connectToDB();
+    if (!pool)
+        return res.status(500).json({
+            status: 500,
+            message: "Failed to connect to the database",
+        });
+    try {
+        const store_id = req.params.id;
+
+        const [rows, fields] = await pool.execute(`SELECT * FROM Stores WHERE id = '${store_id}'`);
+        return res.status(200).json({ status: 200, message: "success", data: rows[0] });
+    } catch (error) {
+        return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        if (pool) await pool.end();
+    }
+}
+
+export { createStore, getStores, getStore, editStore, getStoreLocations };
