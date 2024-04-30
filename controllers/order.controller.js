@@ -3,12 +3,10 @@ import connectToDB from "../config/db.js";
 async function getOrders(req, res) {
     const pool = await connectToDB();
     if (!pool)
-        return res
-            .status(500)
-            .json({
-                status: 500,
-                message: "Failed to connect to the database",
-            });
+        return res.status(500).json({
+            status: 500,
+            message: "Failed to connect to the database",
+        });
     try {
         const [rows] = await pool.execute(
             `SELECT Orders.*, Users.id AS user_id, Users.user_name, Users.email, Users.avatar
@@ -16,9 +14,7 @@ async function getOrders(req, res) {
             LEFT JOIN Users ON Users.id = Orders.user_id`
         );
 
-        return res
-            .status(200)
-            .json({ status: 200, message: "success", data: rows });
+        return res.status(200).json({ status: 200, message: "success", data: rows });
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });
     } finally {
@@ -29,12 +25,10 @@ async function getOrders(req, res) {
 async function getUserOrders(req, res) {
     const pool = await connectToDB();
     if (!pool)
-        return res
-            .status(500)
-            .json({
-                status: 500,
-                message: "Failed to connect to the database",
-            });
+        return res.status(500).json({
+            status: 500,
+            message: "Failed to connect to the database",
+        });
     const user_id = req.params.user_id;
 
     try {
@@ -45,9 +39,7 @@ async function getUserOrders(req, res) {
             WHERE Orders.user_id = '${user_id}'`
         );
 
-        return res
-            .status(200)
-            .json({ status: 200, message: "success", data: rows });
+        return res.status(200).json({ status: 200, message: "success", data: rows });
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });
     } finally {
@@ -58,12 +50,10 @@ async function getUserOrders(req, res) {
 async function getOrderInfo(req, res) {
     const pool = await connectToDB();
     if (!pool)
-        return res
-            .status(500)
-            .json({
-                status: 500,
-                message: "Failed to connect to the database",
-            });
+        return res.status(500).json({
+            status: 500,
+            message: "Failed to connect to the database",
+        });
     try {
         await pool.beginTransaction();
         const orderDetailData = [];
@@ -121,10 +111,7 @@ async function getOrderInfo(req, res) {
                 ...orderDetail,
                 toppings: orderToppings,
                 total_item_price:
-                    (orderToppings.reduce(
-                        (acc, curr) => acc + parseFloat(curr.topping_price),
-                        0
-                    ) +
+                    (orderToppings.reduce((acc, curr) => acc + parseFloat(curr.topping_price), 0) +
                         parseFloat(orderDetail.product_price) +
                         parseFloat(orderDetail.size_price)) *
                     parseFloat(orderDetail.quantity),
@@ -138,9 +125,7 @@ async function getOrderInfo(req, res) {
 
         await pool.commit();
 
-        return res
-            .status(200)
-            .json({ status: 200, message: "success", data: orderInfo });
+        return res.status(200).json({ status: 200, message: "success", data: orderInfo });
     } catch (error) {
         await pool.rollback();
 
@@ -153,12 +138,10 @@ async function getOrderInfo(req, res) {
 async function createOrder(req, res) {
     const pool = await connectToDB();
     if (!pool)
-        return res
-            .status(500)
-            .json({
-                status: 500,
-                message: "Failed to connect to the database",
-            });
+        return res.status(500).json({
+            status: 500,
+            message: "Failed to connect to the database",
+        });
     try {
         const {
             order_id,
@@ -180,10 +163,7 @@ async function createOrder(req, res) {
         let sql = "";
         let values;
 
-        const order_date = new Date()
-            .toISOString()
-            .slice(0, 19)
-            .replace("T", " ");
+        const order_date = new Date().toISOString().slice(0, 19).replace("T", " ");
 
         if (voucher_id) {
             sql = `
@@ -240,21 +220,15 @@ async function createOrder(req, res) {
         for (const order_item of order_items) {
             const [orderDetailResult] = await pool.query(
                 "INSERT INTO OrderDetails (order_id, order_item_price, product_id, size_id, quantity) VALUES (?, ?, ?, ?, ?)",
-                [
-                    order_id,
-                    order_item.order_item_price,
-                    order_item.product_id,
-                    order_item.size_id,
-                    order_item.quantity,
-                ]
+                [order_id, order_item.order_item_price, order_item.product_id, order_item.size_id, order_item.quantity]
             );
 
-            if (order_item.toppings.length > 0) {
+            if (order_items?.toppings && order_item?.toppings.length > 0) {
                 for (const topping of order_item.toppings) {
-                    await pool.query(
-                        "INSERT INTO ToppingStorages (topping_id, order_detail_id) VALUES (?, ?)",
-                        [topping, orderDetailResult.insertId]
-                    );
+                    await pool.query("INSERT INTO ToppingStorages (topping_id, order_detail_id) VALUES (?, ?)", [
+                        topping,
+                        orderDetailResult.insertId,
+                    ]);
                 }
             }
         }
@@ -267,9 +241,7 @@ async function createOrder(req, res) {
 
         await pool.commit();
 
-        return res
-            .status(200)
-            .json({ status: 200, message: "success", data: rows[0] });
+        return res.status(200).json({ status: 200, message: "success", data: rows[0] });
     } catch (error) {
         await pool.rollback();
 
@@ -282,27 +254,20 @@ async function createOrder(req, res) {
 async function editOrderStatus(req, res) {
     const pool = await connectToDB();
     if (!pool)
-        return res
-            .status(500)
-            .json({
-                status: 500,
-                message: "Failed to connect to the database",
-            });
+        return res.status(500).json({
+            status: 500,
+            message: "Failed to connect to the database",
+        });
 
     try {
         const order_id = req.params.id;
         const { order_status } = req.body;
         await pool.beginTransaction();
 
-        const [result] = await pool.query(
-            "UPDATE Orders SET order_status = ? WHERE id = ?",
-            [order_status, order_id]
-        );
+        const [result] = await pool.query("UPDATE Orders SET order_status = ? WHERE id = ?", [order_status, order_id]);
 
         if (result.affectedRows === 0) {
-            return res
-                .status(404)
-                .json({ status: 400, message: "Cant update order status" });
+            return res.status(404).json({ status: 400, message: "Cant update order status" });
         }
 
         await pool.commit();
