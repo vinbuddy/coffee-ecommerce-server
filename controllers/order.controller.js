@@ -76,7 +76,7 @@ async function getOrderInfo(req, res) {
             p.name AS product_name,
             p.price AS product_price,
             p.image AS product_image,
-            s.size_name AS size,
+            s.size_name AS size_name,
             ps.size_price AS size_price,
             od.quantity AS quantity
             FROM 
@@ -120,7 +120,7 @@ async function getOrderInfo(req, res) {
 
         const orderInfo = {
             ...orders[0],
-            order_detail: orderDetailData,
+            order_items: orderDetailData,
         };
 
         await pool.commit();
