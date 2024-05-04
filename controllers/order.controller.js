@@ -164,8 +164,12 @@ async function createOrder(req, res) {
         let values;
 
         const order_date = new Date().toISOString().slice(0, 19).replace("T", " ");
+        await pool.beginTransaction();
 
         if (voucher_id) {
+            // Insert to AppliedVouchers
+            await pool.query("INSERT INTO AppliedVouchers (user_id, voucher_id) VALUES (?, ?)", [user_id, voucher_id]);
+
             sql = `
             INSERT INTO Orders 
             (id, user_id, total_payment, payment_method, order_status, order_type, order_date, order_note, shipping_cost, receiver_name, phone_number, address, store_id, voucher_id) 
@@ -211,10 +215,6 @@ async function createOrder(req, res) {
                 store_id,
             ];
         }
-
-        await pool.beginTransaction();
-
-        const [orderResult] = await pool.query(sql, values);
 
         // Insert into order details table
         for (const order_item of order_items) {
