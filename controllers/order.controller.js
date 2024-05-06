@@ -10,9 +10,14 @@ async function getOrders(req, res) {
         });
     try {
         const [rows] = await pool.execute(
-            `SELECT Orders.*, Users.id AS user_id, Users.user_name, Users.email, Users.avatar
+            `SELECT Orders.*, Users.id AS user_id, Users.user_name, Users.email, Users.avatar, Stores.id AS store_id,
+            Stores.store_name,
+            Vouchers.id AS voucher_id,
+            Vouchers.voucher_name
             FROM Orders
-            LEFT JOIN Users ON Users.id = Orders.user_id`
+            LEFT JOIN Users ON Users.id = Orders.user_id
+            LEFT JOIN Stores ON Stores.id = Orders.store_id
+            LEFT JOIN Vouchers ON Vouchers.id = Orders.voucher_id`
         );
 
         return res.status(200).json({ status: 200, message: "success", data: rows });
@@ -34,9 +39,14 @@ async function getUserOrders(req, res) {
 
     try {
         const [rows] = await pool.execute(
-            `SELECT Orders.*, Users.id AS user_id, Users.user_name, Users.email, Users.avatar
+            `SELECT Orders.*, Users.id AS user_id, Users.user_name, Users.email, Users.avatar, Stores.id AS store_id,
+            Stores.store_name,
+            Vouchers.id AS voucher_id,
+            Vouchers.voucher_name
             FROM Orders
             LEFT JOIN Users ON Users.id = Orders.user_id
+            LEFT JOIN Stores ON Stores.id = Orders.store_id
+            LEFT JOIN Vouchers ON Vouchers.id = Orders.voucher_id
             WHERE Orders.user_id = '${user_id}'`
         );
 
