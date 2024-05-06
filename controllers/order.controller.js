@@ -1,4 +1,5 @@
 import connectToDB from "../config/db.js";
+import moment from "moment";
 
 async function getOrders(req, res) {
     const pool = await connectToDB();
@@ -163,7 +164,8 @@ async function createOrder(req, res) {
         let sql = "";
         let values;
 
-        const order_date = new Date().toISOString().slice(0, 19).replace("T", " ");
+        const currentVietnamDateTime = moment().utcOffset("+07:00");
+        const order_date = currentVietnamDateTime.format("YYYY-MM-DD HH:mm:ss");
         await pool.beginTransaction();
 
         if (voucher_id) {
@@ -215,6 +217,8 @@ async function createOrder(req, res) {
                 store_id,
             ];
         }
+
+        const [orderResult] = await pool.query(sql, values);
 
         // Insert into order details table
         for (const order_item of order_items) {
