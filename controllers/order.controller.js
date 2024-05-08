@@ -17,7 +17,8 @@ async function getOrders(req, res) {
             FROM Orders
             LEFT JOIN Users ON Users.id = Orders.user_id
             LEFT JOIN Stores ON Stores.id = Orders.store_id
-            LEFT JOIN Vouchers ON Vouchers.id = Orders.voucher_id`
+            LEFT JOIN Vouchers ON Vouchers.id = Orders.voucher_id
+            ORDER BY Orders.order_date DESC`
         );
 
         return res.status(200).json({ status: 200, message: "success", data: rows });
@@ -38,7 +39,7 @@ async function getUserOrders(req, res) {
     const user_id = req.params.user_id;
 
     try {
-        const [rows] = await pool.execute(
+        const [orders] = await pool.query(
             `SELECT Orders.*, Users.id AS user_id, Users.user_name, Users.email, Users.avatar, Stores.id AS store_id,
             Stores.store_name,
             Vouchers.id AS voucher_id,
@@ -47,10 +48,69 @@ async function getUserOrders(req, res) {
             LEFT JOIN Users ON Users.id = Orders.user_id
             LEFT JOIN Stores ON Stores.id = Orders.store_id
             LEFT JOIN Vouchers ON Vouchers.id = Orders.voucher_id
-            WHERE Orders.user_id = '${user_id}'`
+            WHERE Orders.user_id = '${user_id}'
+            ORDER BY Orders.order_date DESC`
         );
 
-        return res.status(200).json({ status: 200, message: "success", data: rows });
+        const orderDetailData = [];
+        const orderData = [];
+
+        for (let orderItem of orders) {
+            const [orderDetails] = await pool.query(
+                `SELECT 
+                od.id,
+                p.id AS product_id,
+                p.name AS product_name,
+                p.price AS product_price,
+                p.image AS product_image,
+                s.size_name AS size_name,
+                ps.size_price AS size_price,
+                od.quantity AS quantity
+                FROM 
+                    OrderDetails od
+                LEFT JOIN 
+                    Products p ON od.product_id = p.id
+                LEFT JOIN 
+                    ProductSizes ps ON od.product_id = ps.product_id AND od.size_id = ps.size_id
+                LEFT JOIN 
+                    Sizes s ON od.size_id = s.id
+                WHERE
+                    od.order_id = '${orderItem.id}'
+                GROUP BY
+                    od.id, p.name, p.price, p.image, s.size_name, ps.size_price, od.quantity;`
+            );
+
+            orderData.push({
+                ...orderItem,
+                order_items: orderDetails,
+            });
+        }
+
+        for (const orderItem of orderData) {
+            for (const orderDetail of orderItem.order_items) {
+                const [orderToppings] = await pool.query(
+                    `SELECT
+                    ts.id AS topping_storage_id,
+                    t.topping_name,
+                    t.topping_price
+                    FROM
+                        ToppingStorages ts
+                    LEFT JOIN
+                        Toppings t ON ts.topping_id = t.id
+                    WHERE
+                        ts.order_detail_id = '${orderDetail.id}' `
+                );
+
+                orderDetail["toppings"] = orderToppings.length > 0 ? orderToppings : null;
+                orderDetail["order_item_price"] =
+                    (orderToppings.reduce((acc, curr) => acc + parseFloat(curr.topping_price), 0) +
+                        parseFloat(orderDetail.product_price) +
+                        parseFloat(orderDetail.size_price)) *
+                    parseFloat(orderDetail.quantity);
+            }
+        }
+
+        return res.status(200).json({ status: 200, message: "success", data: orderData });
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });
     } finally {
@@ -120,8 +180,8 @@ async function getOrderInfo(req, res) {
 
             orderDetailData.push({
                 ...orderDetail,
-                toppings: orderToppings,
-                total_item_price:
+                toppings: orderToppings.length > 0 ? orderToppings : null,
+                order_item_price:
                     (orderToppings.reduce((acc, curr) => acc + parseFloat(curr.topping_price), 0) +
                         parseFloat(orderDetail.product_price) +
                         parseFloat(orderDetail.size_price)) *
@@ -230,8 +290,11 @@ async function createOrder(req, res) {
 
         const [orderResult] = await pool.query(sql, values);
 
-        // Insert into order details table
+        // Insert into order details tables
         for (const order_item of order_items) {
+            // Delete associated ToppingStorages
+            await pool.query("DELETE FROM ToppingStorages WHERE cart_item_id = ?", [order_item.id]);
+
             const [orderDetailResult] = await pool.query(
                 "INSERT INTO OrderDetails (order_id, order_item_price, product_id, size_id, quantity) VALUES (?, ?, ?, ?, ?)",
                 [order_id, order_item.order_item_price, order_item.product_id, order_item.size_id, order_item.quantity]
@@ -239,18 +302,31 @@ async function createOrder(req, res) {
 
             if (order_items?.toppings && order_item?.toppings.length > 0) {
                 for (const topping of order_item.toppings) {
-                    await pool.query("INSERT INTO ToppingStorages (topping_id, order_detail_id) VALUES (?, ?)", [
-                        topping,
-                        orderDetailResult.insertId,
-                    ]);
+                    if (typeof topping === "number") {
+                        await pool.query("INSERT INTO ToppingStorages (topping_id, order_detail_id) VALUES (?, ?)", [
+                            topping,
+                            orderDetailResult.insertId,
+                        ]);
+                    } else {
+                        await pool.query("INSERT INTO ToppingStorages (topping_id, order_detail_id) VALUES (?, ?)", [
+                            topping.topping_id,
+                            orderDetailResult.insertId,
+                        ]);
+                    }
                 }
             }
         }
 
         const [rows] = await pool.query(
-            `SELECT Orders.*, Users.id AS user_id, Users.user_name, Users.email, Users.avatar
+            `SELECT Orders.*, Users.id AS user_id, Users.user_name, Users.email, Users.avatar, Stores.id AS store_id,
+            Stores.store_name,
+            Vouchers.id AS voucher_id,
+            Vouchers.voucher_name
             FROM Orders
-            LEFT JOIN Users ON Users.id = Orders.user_id WHERE Orders.id = '${order_id}'`
+            LEFT JOIN Users ON Users.id = Orders.user_id 
+            LEFT JOIN Vouchers ON Vouchers.id = Orders.voucher_id 
+            LEFT JOIN Stores ON Stores.id = Orders.store_id 
+            WHERE Orders.id = '${order_id}'`
         );
 
         await pool.commit();
