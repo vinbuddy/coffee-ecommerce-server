@@ -52,7 +52,6 @@ async function getUserOrders(req, res) {
             ORDER BY Orders.order_date DESC`
         );
 
-        const orderDetailData = [];
         const orderData = [];
 
         for (let orderItem of orders) {
@@ -87,6 +86,10 @@ async function getUserOrders(req, res) {
         }
 
         for (const orderItem of orderData) {
+            // Check isReviewed for each order item
+            const [reviews] = await pool.query(`SELECT * FROM Reviews WHERE order_id = '${orderItem.id}'`);
+            orderItem["is_reviewed"] = reviews.length > 0;
+
             for (const orderDetail of orderItem.order_items) {
                 const [orderToppings] = await pool.query(
                     `SELECT
@@ -234,8 +237,7 @@ async function createOrder(req, res) {
         let sql = "";
         let values;
 
-        const currentVietnamDateTime = moment().utcOffset("+07:00");
-        const order_date = currentVietnamDateTime.format("YYYY-MM-DD HH:mm:ss");
+        const order_date = moment().format("YYYY-MM-DD HH:mm:ss");
         await pool.beginTransaction();
 
         if (voucher_id) {

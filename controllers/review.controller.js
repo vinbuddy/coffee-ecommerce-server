@@ -1,4 +1,5 @@
 import connectToDB from "../config/db.js";
+import moment from "moment";
 
 const MIN_STAR_RATING = 1;
 const MAX_STAR_RATING = 5;
@@ -6,26 +7,45 @@ const MAX_STAR_RATING = 5;
 async function getReviews(req, res) {
     const pool = await connectToDB();
     if (!pool)
-        return res
-            .status(500)
-            .json({
-                status: 500,
-                message: "Failed to connect to the database",
-            });
+        return res.status(500).json({
+            status: 500,
+            message: "Failed to connect to the database",
+        });
 
     try {
         const rating = req.query.rating;
-        let query = `SELECT * FROM Reviews ORDER BY review_date DESC`;
+        let query = `SELECT 
+            Reviews.id, Reviews.order_id, Reviews.content, Reviews.rating, Reviews.review_date, 
+            Users.user_name, Users.email, Users.avatar
+            FROM Reviews
+            LEFT JOIN Users ON Reviews.user_id = Users.id
+            ORDER BY Reviews.review_date DESC`;
 
         if (rating && rating > MIN_STAR_RATING && rating <= MAX_STAR_RATING) {
-            query = `SELECT * FROM Reviews WHERE rating = '${rating}' ORDER BY review_date DESC`;
+            query = `
+                SELECT Reviews.id, Reviews.order_id, Reviews.content, Reviews.rating, Reviews.review_date, 
+                Users.user_name, Users.email, Users.avatar
+                FROM Reviews
+                LEFT JOIN Users ON Reviews.user_id = Users.id
+                WHERE Reviews.rating = '${rating}'
+                ORDER BY Reviews.review_date DESC
+            `;
         }
 
-        const [rows] = await pool.query(query);
+        const [reviews] = await pool.query(query);
 
-        return res
-            .status(200)
-            .json({ status: 200, message: "success", data: rows });
+        for (let review of reviews) {
+            const [orderProducts] = await pool.query(
+                `SELECT Products.id AS product_id, Products.name AS product_name, Products.price AS product_price, Products.image AS product_image
+                FROM OrderDetails 
+                LEFT JOIN Products ON OrderDetails.product_id = Products.id
+                WHERE OrderDetails.order_id = '${review.order_id}'`
+            );
+
+            review["order_products"] = orderProducts;
+        }
+
+        return res.status(200).json({ status: 200, message: "success", data: reviews });
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });
     } finally {
@@ -36,12 +56,10 @@ async function getReviews(req, res) {
 async function getProductReviews(req, res) {
     const pool = await connectToDB();
     if (!pool)
-        return res
-            .status(500)
-            .json({
-                status: 500,
-                message: "Failed to connect to the database",
-            });
+        return res.status(500).json({
+            status: 500,
+            message: "Failed to connect to the database",
+        });
 
     try {
         await pool.beginTransaction();
@@ -51,12 +69,11 @@ async function getProductReviews(req, res) {
 
         const [orderDetailsRows] = await pool.query(
             `
-            SELECT od.*, p.id AS product_id, p.name, p.image
-            FROM OrderDetails AS od
-            JOIN Products AS p ON od.product_id = p.id
-            WHERE od.product_id = ?
-            `,
-            [product_id]
+            SELECT OrderDetails.order_id, Products.id AS product_id, Products.name AS product_name, Products.price AS product_price, Products.image AS product_image
+                FROM OrderDetails 
+                LEFT JOIN Products ON OrderDetails.product_id = Products.id
+                WHERE OrderDetails.product_id = '${product_id}'
+            `
         );
 
         if (orderDetailsRows.length === 0) {
@@ -68,25 +85,35 @@ async function getProductReviews(req, res) {
 
         const orderIds = orderDetailsRows.map((row) => row.order_id);
 
-        let query = `SELECT * FROM Reviews WHERE order_id IN (?)`;
+        let query = `SELECT 
+                    Reviews.id, Reviews.order_id, Reviews.content, Reviews.rating, Reviews.review_date, 
+                    Users.user_name, Users.email, Users.avatar
+                    FROM Reviews
+                    LEFT JOIN Users ON Reviews.user_id = Users.id
+                    WHERE order_id IN (?)
+                    ORDER BY Reviews.review_date DESC`;
 
         if (rating && rating > MIN_STAR_RATING && rating <= MAX_STAR_RATING) {
-            query = `SELECT * FROM Reviews WHERE rating = '${rating}' AND order_id IN (?) ORDER BY review_date DESC`;
+            query = `SELECT 
+            Reviews.id, Reviews.order_id, Reviews.content, Reviews.rating, Reviews.review_date, 
+            Users.user_name, Users.email, Users.avatar
+            FROM Reviews
+            LEFT JOIN Users ON Reviews.user_id = Users.id
+            WHERE rating = '${rating}' AND order_id IN (?)
+            ORDER BY Reviews.review_date DESC`;
         }
 
         const [rows] = await pool.query(query, [orderIds]);
 
         for (let review of rows) {
-            const order_products = orderDetailsRows.filter(
-                (orderDetail) => orderDetail.order_id === review.order_id
-            );
-            review.order_products = order_products;
+            const order_products = orderDetailsRows.filter((orderDetail) => orderDetail.order_id === review.order_id);
+
+            // exclude order_id from the product details
+            review["order_products"] = order_products.map(({ order_id, ...rest }) => rest);
         }
 
         await pool.commit();
-        return res
-            .status(200)
-            .json({ status: 200, message: "success", data: rows });
+        return res.status(200).json({ status: 200, message: "success", data: rows });
     } catch (error) {
         await pool.rollback();
         return res.status(500).json({ status: 500, message: error.message });
@@ -98,30 +125,33 @@ async function getProductReviews(req, res) {
 async function createReview(req, res) {
     const pool = await connectToDB();
     if (!pool)
-        return res
-            .status(500)
-            .json({
-                status: 500,
-                message: "Failed to connect to the database",
-            });
+        return res.status(500).json({
+            status: 500,
+            message: "Failed to connect to the database",
+        });
 
     try {
         await pool.beginTransaction();
 
-        const { content, rating, review_date, order_id, user_id } = req.body;
+        const { content, rating, order_id, user_id } = req.body;
+        const review_date = moment().format("YYYY-MM-DD HH:mm:ss");
         const [result] = await pool.query(
             "INSERT INTO Reviews (content, rating, review_date, order_id, user_id) VALUES (?, ?, ?, ?, ?)",
             [content, rating, review_date, order_id, user_id]
         );
 
-        const [rows] = await pool.query(
-            `SELECT * FROM Reviews WHERE id = '${result.insertId}'`
-        );
+        let query = `SELECT 
+                    Reviews.id, Reviews.order_id, Reviews.content, Reviews.rating, Reviews.review_date, 
+                    Users.user_name, Users.email, Users.avatar
+                    FROM Reviews
+                    LEFT JOIN Users ON Reviews.user_id = Users.id
+                    WHERE Reviews.id = '${result.insertId}'
+                    ORDER BY Reviews.review_date DESC`;
+
+        const [rows] = await pool.query(query);
 
         await pool.commit();
-        return res
-            .status(200)
-            .json({ status: 200, message: "success", data: rows[0] });
+        return res.status(200).json({ status: 200, message: "success", data: rows[0] });
     } catch (error) {
         await pool.rollback();
         return res.status(500).json({ status: 500, message: error.message });
