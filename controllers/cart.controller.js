@@ -138,6 +138,7 @@ async function getUserCart(req, res) {
             p.id AS product_id,
             p.name AS product_name,
             p.price AS product_price,
+            p.status AS product_status,
             p.image AS product_image,
             s.id AS size_id,
             s.size_name AS size_name,
@@ -154,7 +155,7 @@ async function getUserCart(req, res) {
             WHERE
                 ci.user_id = '${user_id}'
             GROUP BY
-                ci.id, p.name, p.price, p.image, s.id, s.size_name, ps.size_price, ci.quantity;`
+                ci.id, p.name, p.price, p.status, p.image, s.id, s.size_name, ps.size_price, ci.quantity;`
         );
 
         for (const cart of carts) {
