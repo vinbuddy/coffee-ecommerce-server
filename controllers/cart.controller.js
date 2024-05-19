@@ -364,9 +364,9 @@ async function deleteCart(req, res) {
 
         const [result] = await pool.query(`DELETE FROM CartItems WHERE id = '${cart_item_id}'`);
 
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ status: 400, message: "cart item not found" });
-        }
+        // if (result.affectedRows === 0) {
+        //     return res.status(404).json({ status: 400, message: "cart item not found" });
+        // }
 
         await pool.commit();
 
