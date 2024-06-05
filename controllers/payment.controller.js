@@ -25,6 +25,11 @@ async function createVnPayUrl(req, res) {
         let secretKey = process.env.vnp_HashSecret;
         let vnpUrl = process.env.vnp_Url;
         let returnUrl = process.env.vnp_ReturnUrl;
+
+        if (req.body.checkoutFrom && req.body.checkoutFrom === "android") {
+            returnUrl = process.env.android_app_vnp_ReturnUrl;
+        }
+
         let orderId = moment(date).format("DDHHmmss");
 
         let amount = req.body.total_payment; // request
@@ -82,6 +87,11 @@ async function createMomoUrl(req, res) {
         let orderId = requestId;
         let orderInfo = "Thanh toán bằng MoMo cho đơn: " + orderId;
         let redirectUrl = process.env.momo_ReturnUrl;
+
+        if (req.body.checkoutFrom && req.body.checkoutFrom === "android") {
+            redirectUrl = process.env.android_app_momo_ReturnUrl;
+        }
+
         let ipnUrl = process.env.momo_ReturnUrl;
         let amount = req.body.total_payment;
         // let requestType = "captureWallet"
@@ -110,10 +120,7 @@ async function createMomoUrl(req, res) {
             "&requestType=" +
             requestType;
 
-        let signature = crypto
-            .createHmac("sha256", secretkey)
-            .update(rawSignature)
-            .digest("hex");
+        let signature = crypto.createHmac("sha256", secretkey).update(rawSignature).digest("hex");
 
         //json object send to MoMo endpoint
         const requestBody = JSON.stringify({

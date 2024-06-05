@@ -349,7 +349,7 @@ async function createOrder(req, res) {
         const order_date = moment().format("YYYY-MM-DD HH:mm:ss");
         await pool.beginTransaction();
 
-        if (voucher_id) {
+        if (voucher_id && voucher_id != 0) {
             // Insert to AppliedVouchers
             await pool.query("INSERT INTO AppliedVouchers (user_id, voucher_id) VALUES (?, ?)", [user_id, voucher_id]);
 
@@ -444,6 +444,7 @@ async function createOrder(req, res) {
 
         return res.status(200).json({ status: 200, message: "success", data: rows[0] });
     } catch (error) {
+        console.log(error.message);
         await pool.rollback();
 
         return res.status(500).json({ status: 500, message: error.message });
