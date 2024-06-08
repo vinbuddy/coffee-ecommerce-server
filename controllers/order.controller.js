@@ -243,17 +243,17 @@ async function getOrderInfo(req, res) {
 
         const order_id = req.params.id;
         const [orders, fields] = await pool.query(
-            `SELECT Orders.*, Users.id AS user_id, 
+            `SELECT Orders.*, Users.id AS user_id,
             Users.user_name, Users.email, Users.avatar, Vouchers.id AS voucher_id, Vouchers.voucher_name, Stores.id AS store_id, Stores.store_name
-            FROM Orders 
+            FROM Orders
             LEFT JOIN Users ON Users.id = Orders.user_id
-            LEFT JOIN Vouchers ON Vouchers.id = Orders.voucher_id 
-            LEFT JOIN Stores ON Stores.id = Orders.store_id 
+            LEFT JOIN Vouchers ON Vouchers.id = Orders.voucher_id
+            LEFT JOIN Stores ON Stores.id = Orders.store_id
             WHERE Orders.id = '${order_id}'`
         );
 
         const [orderDetails] = await pool.query(
-            `SELECT 
+            `SELECT
             od.id,
             p.id AS product_id,
             p.name AS product_name,
@@ -262,18 +262,18 @@ async function getOrderInfo(req, res) {
             s.size_name AS size_name,
             ps.size_price AS size_price,
             od.quantity AS quantity
-            FROM 
+            FROM
                 OrderDetails od
-            LEFT JOIN 
+            LEFT JOIN
                 Products p ON od.product_id = p.id
-            LEFT JOIN 
+            LEFT JOIN
                 ProductSizes ps ON od.product_id = ps.product_id AND od.size_id = ps.size_id
-            LEFT JOIN 
+            LEFT JOIN
                 Sizes s ON od.size_id = s.id
             WHERE
                 od.order_id = '${order_id}'
             GROUP BY
-                od.id, p.name, p.price, p.image, s.size_name, ps.size_price, od.quantity;`
+                od.id, p.id, p.name, p.price, p.image, s.size_name, ps.size_price, od.quantity;`
         );
 
         for (const orderDetail of orderDetails) {
@@ -287,7 +287,7 @@ async function getOrderInfo(req, res) {
                 LEFT JOIN
                     Toppings t ON ts.topping_id = t.id
                 WHERE
-                    ts.order_detail_id = '${orderDetail.order_id}' `
+                    ts.order_detail_id = '${orderDetail.order_id}'`
             );
 
             orderDetailData.push({
