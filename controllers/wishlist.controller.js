@@ -13,7 +13,7 @@ async function getUserWishList(req, res) {
         const user_id = req.params.user_id;
 
         const [rows] = await pool.query(
-            `SELECT WishList.id, Products.id AS product_id, Products.name AS product_name, Products.price AS product_price, Products.image AS product_image 
+            `SELECT WishList.id, Products.id AS product_id, Products.name AS product_name, Products.price AS product_price, Products.image AS product_image, Products.description AS product_description, Products.status AS product_status
             FROM WishList 
             INNER JOIN Products ON WishList.product_id = Products.id
             WHERE user_id = '${user_id}'`
