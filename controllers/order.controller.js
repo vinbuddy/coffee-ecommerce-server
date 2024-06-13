@@ -204,16 +204,52 @@ async function getUserOrders(req, res) {
             return map;
         }, {});
 
+        // const orderData = orders.map((order) => {
+        //     const orderItems = orderDetailsMap[order.id] || [];
+        //     orderItems.forEach((item) => {
+        //         const toppings = orderToppingsMap[item.id] || [];
+        //         item.toppings = toppings.length > 0 ? toppings : null;
+        //         item.order_item_price =
+        //             (toppings.reduce((acc, curr) => acc + parseFloat(curr.topping_price), 0) +
+        //                 parseFloat(item.product_price) +
+        //                 parseFloat(item.size_price)) *
+        //             parseFloat(item.quantity);
+        //     });
+        //     return {
+        //         ...order,
+        //         order_items: orderItems,
+        //         is_reviewed: !!reviewsMap[order.id],
+        //     };
+        // });
         const orderData = orders.map((order) => {
             const orderItems = orderDetailsMap[order.id] || [];
             orderItems.forEach((item) => {
                 const toppings = orderToppingsMap[item.id] || [];
-                item.toppings = toppings.length > 0 ? toppings : null;
-                item.order_item_price =
-                    (toppings.reduce((acc, curr) => acc + parseFloat(curr.topping_price), 0) +
-                        parseFloat(item.product_price) +
-                        parseFloat(item.size_price)) *
-                    parseFloat(item.quantity);
+
+                // Calculate item price, handling null values and empty arrays gracefully
+                const productPrice = parseFloat(item.product_price) || 0;
+                const sizePrice = item.size_price ? parseFloat(item.size_price) : 0;
+                const toppingsPrice =
+                    toppings.length > 0 ? toppings.reduce((acc, curr) => acc + parseFloat(curr.topping_price), 0) : 0;
+                const quantity = parseFloat(item.quantity) || 0;
+
+                // Calculate order_item_price considering toppings and size_price
+                let orderItemPrice = productPrice; // Start with base product price
+
+                // Add size price if it exists
+                if (item.size_price !== null) {
+                    orderItemPrice += sizePrice;
+                }
+
+                // Add toppings price if toppings exist
+                if (toppings.length > 0) {
+                    orderItemPrice += toppingsPrice;
+                }
+
+                // Multiply by quantity
+                orderItemPrice *= quantity;
+
+                item.order_item_price = orderItemPrice;
             });
             return {
                 ...order,
@@ -290,14 +326,30 @@ async function getOrderInfo(req, res) {
                     ts.order_detail_id = '${orderDetail.order_id}'`
             );
 
+            // orderDetailData.push({
+            //     ...orderDetail,
+            //     toppings: orderToppings.length > 0 ? orderToppings : null,
+            //     order_item_price:
+            //         (orderToppings.reduce((acc, curr) => acc + parseFloat(curr.topping_price), 0) +
+            //             parseFloat(orderDetail.product_price) +
+            //             parseFloat(orderDetail.size_price)) *
+            //         parseFloat(orderDetail.quantity),
+            // });
+
+            const productPrice = parseFloat(orderDetail.product_price) || 0;
+            const sizePrice = orderDetail.size_price ? parseFloat(orderDetail.size_price) : 0;
+            const toppingsPrice =
+                orderToppings.length > 0
+                    ? orderToppings.reduce((acc, curr) => acc + parseFloat(curr.topping_price), 0)
+                    : 0;
+            const quantity = parseFloat(orderDetail.quantity) || 0;
+
+            const orderItemPrice = (toppingsPrice + productPrice + sizePrice) * quantity;
+
             orderDetailData.push({
                 ...orderDetail,
                 toppings: orderToppings.length > 0 ? orderToppings : null,
-                order_item_price:
-                    (orderToppings.reduce((acc, curr) => acc + parseFloat(curr.topping_price), 0) +
-                        parseFloat(orderDetail.product_price) +
-                        parseFloat(orderDetail.size_price)) *
-                    parseFloat(orderDetail.quantity),
+                order_item_price: orderItemPrice,
             });
         }
 
@@ -401,14 +453,19 @@ async function createOrder(req, res) {
 
         const [orderResult] = await pool.query(sql, values);
 
-        // Insert into order details tables
         for (const order_item of order_items) {
-            // Delete associated ToppingStorages
+            console.log("order_items: ", order_items?.size_id);
             await pool.query("DELETE FROM ToppingStorages WHERE cart_item_id = ?", [order_item.id]);
 
             const [orderDetailResult] = await pool.query(
                 "INSERT INTO OrderDetails (order_id, order_item_price, product_id, size_id, quantity) VALUES (?, ?, ?, ?, ?)",
-                [order_id, order_item.order_item_price, order_item.product_id, order_item.size_id, order_item.quantity]
+                [
+                    order_id,
+                    order_item.order_item_price,
+                    order_item.product_id,
+                    order_item.size_id || null,
+                    order_item.quantity,
+                ]
             );
 
             if (order_items?.toppings && order_item?.toppings.length > 0) {
