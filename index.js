@@ -2,6 +2,7 @@ import express from "express";
 import env from "dotenv";
 import cors from "cors";
 import bodyParser from "body-parser";
+import mongoose from "mongoose";
 
 import userRoutes from "./routes/user.route.js";
 import authRoutes from "./routes/auth.route.js";
@@ -44,5 +45,15 @@ app.use("/wishlist", wishlistRoutes);
 app.use("/review", reviewRoutes);
 
 app.listen(port, () => {
-    console.log(`running on http://localhost:${port}`);
+    const mongodbURI = process.env.MONGODB_URI;
+    mongoose.connect(mongodbURI).then(
+        (dbo) => {
+            console.log("MongoDB connected 🚀");
+            console.log(`running on http://localhost:${port}`);
+        },
+        (err) => {
+            console.log("MongoDB connection error: ", err);
+            console.log("MongoDB connection failed ❌");
+        }
+    );
 });
