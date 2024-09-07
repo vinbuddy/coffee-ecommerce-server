@@ -17,6 +17,7 @@ import voucherRoutes from "./routes/voucher.route.js";
 import orderRoutes from "./routes/order.route.js";
 import wishlistRoutes from "./routes/wishlist.route.js";
 import reviewRoutes from "./routes/review.route.js";
+import revenueRoutes from "./routes/revenue.route.js";
 
 env.config();
 
@@ -43,6 +44,7 @@ app.use("/voucher", voucherRoutes);
 app.use("/order", orderRoutes);
 app.use("/wishlist", wishlistRoutes);
 app.use("/review", reviewRoutes);
+app.use("/revenue", revenueRoutes);
 
 app.listen(port, () => {
     const mongodbURI = process.env.MONGODB_URI;
