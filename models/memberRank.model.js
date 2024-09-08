@@ -16,7 +16,7 @@ const memberRank = new mongoose.Schema({
     },
     expense: {
         type: mongoose.Types.Decimal128,
-        default: 100000,
+        default: 0,
     },
     vouchers: [
         {
@@ -26,6 +26,6 @@ const memberRank = new mongoose.Schema({
     ],
 });
 
-const memberRankModel = mongoose.model("MemberRank", memberRank);
+const MemberRankModel = mongoose.model("MemberRank", memberRank);
 
-module.exports = memberRankModel;
+export default MemberRankModel;

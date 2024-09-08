@@ -1,6 +1,9 @@
 import connectToDB from "../config/db.js";
 import bcrypt from "bcrypt";
 
+import MemberRankModel from "../models/memberRank.model.js";
+import MemberCoinModel from "../models/memberCoin.model.js";
+
 async function createUserAccount(req, res) {
     const { id, user_name, email, avatar, account_type } = req.body;
 
@@ -46,6 +49,16 @@ async function createUserAccount(req, res) {
             );
 
             const [users] = await pool.query(`SELECT * FROM Users WHERE id = '${id}'`);
+
+            // Create member rank and Coin
+            const memberRank = await MemberRankModel.findById(users[0].id);
+            if (!memberRank) {
+                await new MemberRankModel({ userId: users[0].id, vouchers: [] });
+                await new MemberCoinModel({ userId: users[0].id, history: [] });
+
+                await MemberRankModel.save();
+                await MemberCoinModel.save();
+            }
 
             return res.status(200).json({ status: 200, message: "success", data: users });
         }

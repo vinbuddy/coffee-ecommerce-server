@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const coin = new mongoose.Schema({
+const memberCoin = new mongoose.Schema({
     userId: {
         type: String,
         required: true,
@@ -31,6 +31,6 @@ const coin = new mongoose.Schema({
     ],
 });
 
-const coinModel = mongoose.model("Coin", coin);
+const MemberCoinModel = mongoose.model("MemberCoin", memberCoin);
 
-module.exports = coinModel;
+export default MemberCoinModel;

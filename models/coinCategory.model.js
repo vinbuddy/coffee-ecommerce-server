@@ -15,6 +15,6 @@ const coinCategory = new mongoose.Schema({
     },
 });
 
-const coinCategoryModel = mongoose.model("CoinCategory", coinCategory);
+const CoinCategoryModel = mongoose.model("CoinCategory", coinCategory);
 
-module.exports = coinCategoryModel;
+export default CoinCategoryModel;

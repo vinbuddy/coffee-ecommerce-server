@@ -40,6 +40,6 @@ const memberVoucher = new mongoose.Schema({
     },
 });
 
-const memberVoucherModel = mongoose.model("MemberVoucher", memberVoucher);
+const MemberVoucherModel = mongoose.model("MemberVoucher", memberVoucher);
 
-module.exports = memberVoucherModel;
+export default MemberVoucherModel;
