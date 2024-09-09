@@ -17,11 +17,11 @@ export const MEMBER_RANK = Object.freeze({
 export const ORDER_COUNT_THRESHOLD = Object.freeze({
     SILVER: 15,
     GOLD: 25,
-    PLATINUM: 40,
+    DIAMOND: 40,
 });
 
 export const EXPENSE_THRESHOLD = Object.freeze({
     SILVER: 500000, // 500,000 VND
     GOLD: 1000000, // 1,000,000 VND
-    PLATINUM: 3000000, // 3,000,000 VND
+    DIAMOND: 3000000, // 3,000,000 VND
 });

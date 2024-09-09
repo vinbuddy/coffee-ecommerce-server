@@ -324,8 +324,8 @@ function calculateNewMemberRank(member) {
     let newRank = member.rank; // Giữ nguyên rank ban đầu
 
     // Xét hạng dựa trên số lượng đơn hàng
-    if (member.sixMonthOrderCount >= ORDER_COUNT_THRESHOLD.PLATINUM) {
-        newRank = MEMBER_RANK.PLATINUM;
+    if (member.sixMonthOrderCount >= ORDER_COUNT_THRESHOLD.DIAMOND) {
+        newRank = MEMBER_RANK.DIAMOND;
     } else if (member.sixMonthOrderCount >= ORDER_COUNT_THRESHOLD.GOLD) {
         newRank = MEMBER_RANK.GOLD;
     } else if (member.sixMonthOrderCount >= ORDER_COUNT_THRESHOLD.SILVER) {
@@ -333,7 +333,7 @@ function calculateNewMemberRank(member) {
     }
 
     // Nếu chi tiêu đạt mức yêu cầu, nâng cấp hạng
-    if (member.sixMonthExpense >= EXPENSE_THRESHOLD.PLATINUM && newRank !== MEMBER_RANK.PLATINUM) {
+    if (member.sixMonthExpense >= EXPENSE_THRESHOLD.DIAMOND && newRank !== MEMBER_RANK.DIAMOND) {
         newRank = MEMBER_RANK.PLATINUM;
     } else if (member.sixMonthExpense >= EXPENSE_THRESHOLD.GOLD && newRank !== MEMBER_RANK.GOLD) {
         newRank = MEMBER_RANK.GOLD;
