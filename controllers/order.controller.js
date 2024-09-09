@@ -334,12 +334,14 @@ function calculateNewMemberRank(member) {
 
     // Nếu chi tiêu đạt mức yêu cầu, nâng cấp hạng
     if (member.sixMonthExpense >= EXPENSE_THRESHOLD.DIAMOND && newRank !== MEMBER_RANK.DIAMOND) {
-        newRank = MEMBER_RANK.PLATINUM;
+        newRank = MEMBER_RANK.DIAMOND;
     } else if (member.sixMonthExpense >= EXPENSE_THRESHOLD.GOLD && newRank !== MEMBER_RANK.GOLD) {
         newRank = MEMBER_RANK.GOLD;
     } else if (member.sixMonthExpense >= EXPENSE_THRESHOLD.SILVER && newRank !== MEMBER_RANK.SILVER) {
         newRank = MEMBER_RANK.SILVER;
     }
+
+    return newRank;
 }
 
 async function updateMemberRank(userId = null) {
