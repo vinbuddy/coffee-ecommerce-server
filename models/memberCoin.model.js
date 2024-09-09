@@ -5,7 +5,7 @@ const memberCoin = new mongoose.Schema({
         type: String,
         required: true,
     },
-    totalCoins: {
+    coinCount: {
         type: Number,
         default: 0,
     },

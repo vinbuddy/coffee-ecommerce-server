@@ -51,7 +51,7 @@ async function createUserAccount(req, res) {
             const [users] = await pool.query(`SELECT * FROM Users WHERE id = '${id}'`);
 
             // Create member rank and Coin
-            const memberRank = await MemberRankModel.findById(users[0].id);
+            const memberRank = await MemberRankModel.findOne({ userId: users[0].id });
             if (!memberRank) {
                 await new MemberRankModel({ userId: users[0].id, vouchers: [] });
                 await new MemberCoinModel({ userId: users[0].id, history: [] });
