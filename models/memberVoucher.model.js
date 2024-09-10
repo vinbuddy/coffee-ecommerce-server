@@ -26,11 +26,11 @@ const memberVoucher = new mongoose.Schema({
         required: true,
     },
     discount_price: {
-        type: mongoose.Types.Decimal128,
+        type: Number,
         required: true,
     },
     min_price: {
-        type: mongoose.Types.Decimal128,
+        type: Number,
         required: true,
     },
     rank: {

@@ -2,7 +2,8 @@ import mongoose from "mongoose";
 
 const memberCoin = new mongoose.Schema({
     userId: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Member",
         required: true,
     },
     coinCount: {
@@ -20,7 +21,7 @@ const memberCoin = new mongoose.Schema({
     history: [
         {
             coinCategory: {
-                type: Schema.Types.ObjectId,
+                type: mongoose.Schema.Types.ObjectId,
                 ref: "CoinCategory",
             },
             date: {

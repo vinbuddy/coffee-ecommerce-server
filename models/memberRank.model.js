@@ -1,10 +1,10 @@
 import mongoose from "mongoose";
-import mongoose from "mongoose";
 
 const memberRank = new mongoose.Schema(
     {
         userId: {
-            type: String,
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Member",
             required: true,
         },
         rank: {

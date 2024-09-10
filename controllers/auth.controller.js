@@ -3,6 +3,8 @@ import bcrypt from "bcrypt";
 
 import MemberRankModel from "../models/memberRank.model.js";
 import MemberCoinModel from "../models/memberCoin.model.js";
+import mongoose from "mongoose";
+import MemberModel from "../models/member.model.js";
 
 async function createUserAccount(req, res) {
     const { id, user_name, email, avatar, account_type } = req.body;
@@ -51,11 +53,18 @@ async function createUserAccount(req, res) {
             const [users] = await pool.query(`SELECT * FROM Users WHERE id = '${id}'`);
 
             // Create member rank and Coin
-            const memberRank = await MemberRankModel.findOne({ userId: users[0].id });
-            if (!memberRank) {
-                await new MemberRankModel({ userId: users[0].id, vouchers: [] });
-                await new MemberCoinModel({ userId: users[0].id, history: [] });
+            const member = await MemberRankModel.findOne({ userId: new mongoose.Types.ObjectId(users[0].id) });
+            if (!member) {
+                await new MemberModel({
+                    userId: new mongoose.Types.ObjectId(users[0].id),
+                    username: user_name,
+                    email: email,
+                    avatar: avatar,
+                });
+                await new MemberRankModel({ userId: new mongoose.Types.ObjectId(users[0].id), vouchers: [] });
+                await new MemberCoinModel({ userId: new mongoose.Types.ObjectId(users[0].id), history: [] });
 
+                await MemberModel.save();
                 await MemberRankModel.save();
                 await MemberCoinModel.save();
             }
