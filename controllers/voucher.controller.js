@@ -351,6 +351,8 @@ async function createMemberVoucher(req, res) {
             applicable_products,
             applicable_users,
         } = req.body;
+
+        return res.status(200).json({ message: "create member voucher successfully" });
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });
     }
