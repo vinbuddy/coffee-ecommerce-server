@@ -336,4 +336,24 @@ async function editVoucher(req, res) {
     }
 }
 
+async function createMemberVoucher(req, res) {
+    try {
+        const {
+            voucher_name,
+            description,
+            start_date,
+            end_date,
+            image,
+            discount_type,
+            discount_price,
+            min_order_price,
+            applicable_stores,
+            applicable_products,
+            applicable_users,
+        } = req.body;
+    } catch (error) {
+        return res.status(500).json({ status: 500, message: error.message });
+    }
+}
+
 export { getVouchers, getVoucher, getUserVouchers, createVoucher, editVoucher };
