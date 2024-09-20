@@ -18,8 +18,8 @@ async function getProducts(req, res) {
             // Query without filtering by category
             sql =
                 searchName === ""
-                    ? "SELECT Products.*, Categories.category_name FROM Products INNER JOIN Categories ON Products.category_id = Categories.id WHERE Products.is_deleted = 0"
-                    : `SELECT Products.*, Categories.category_name FROM Products INNER JOIN Categories ON Products.category_id = Categories.id WHERE Products.is_deleted = 0 AND Products.name LIKE '%${searchName}%'`;
+                    ? "SELECT Products.*, Categories.category_name FROM Products INNER JOIN Categories ON Products.category_id = Categories.id WHERE (Products.is_deleted IS NULL OR Products.is_deleted = 0)"
+                    : `SELECT Products.*, Categories.category_name FROM Products INNER JOIN Categories ON Products.category_id = Categories.id WHERE (Products.is_deleted IS NULL OR Products.is_deleted = 0) AND Products.name LIKE '%${searchName}%'`;
 
             const [rows, fields] = await pool.query(sql);
 
@@ -28,8 +28,8 @@ async function getProducts(req, res) {
             // Query with filtering by category
             sql =
                 searchName === ""
-                    ? `SELECT Products.*, Categories.category_name FROM Products INNER JOIN Categories ON Products.category_id = Categories.id WHERE Products.is_deleted = 0 AND Products.category_id = '${category_id}'`
-                    : `SELECT Products.*, Categories.category_name FROM Products INNER JOIN Categories ON Products.category_id = Categories.id WHERE Products.is_deleted = 0 AND Products.category_id = '${category_id}' AND Products.name LIKE '%${searchName}%'`;
+                    ? `SELECT Products.*, Categories.category_name FROM Products INNER JOIN Categories ON Products.category_id = Categories.id WHERE (Products.is_deleted IS NULL OR Products.is_deleted = 0) AND Products.category_id = '${category_id}'`
+                    : `SELECT Products.*, Categories.category_name FROM Products INNER JOIN Categories ON Products.category_id = Categories.id WHERE (Products.is_deleted IS NULL OR Products.is_deleted = 0) AND Products.category_id = '${category_id}' AND Products.name LIKE '%${searchName}%'`;
 
             const [rows, fields] = await pool.query(sql);
 
