@@ -87,9 +87,14 @@ async function loginToStore(req, res) {
             message: "Failed to connect to the database",
         });
     try {
-        const { store_id, password } = req.body;
+        const { store_login_name, password } = req.body;
 
-        const [store_accounts] = await pool.query(`SELECT * FROM StoreAccounts WHERE store_id = '${store_id}'`);
+        const [store_accounts] = await pool.query(
+            `SELECT s.*, StoreAccounts.store_login_name, StoreAccounts.password 
+            FROM StoreAccounts 
+            INNER JOIN Stores s ON s.id = store_id 
+            WHERE store_login_name = '${store_login_name}'`
+        );
         const originPassword = await bcrypt.compare(password.toString(), store_accounts[0].password);
 
         if (!store_accounts[0]) {
@@ -147,19 +152,17 @@ async function loginToAdmin(req, res) {
     try {
         const { email, password } = req.body;
 
-        const [admin_accounts] = await pool.query(
-            `SELECT * FROM Users WHERE email = '${email}' AND password = '${password}' AND role_id = 2`
-        );
+        const [admin_accounts] = await pool.query(`SELECT * FROM Users WHERE email = '${email}' AND role_id = 2`);
 
-        //const originPassword = await bcrypt.compare(password.toString(), admin_accounts[0].password);
+        const originPassword = await bcrypt.compare(password.toString(), admin_accounts[0].password);
 
         if (!admin_accounts[0]) {
             return res.status(404).send("Account is not existed");
         }
 
-        // if (!originPassword) {
-        //     return res.status(404).send({ status: 404, message: "Password is not valid" });
-        // }
+        if (!originPassword) {
+            return res.status(404).send({ status: 404, message: "Password is not valid" });
+        }
 
         return res.status(200).json({ status: 200, message: "success", data: admin_accounts[0] });
     } catch (error) {
