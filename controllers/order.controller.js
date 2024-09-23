@@ -283,7 +283,7 @@ async function getOrderInfo(req, res) {
 
 async function updateMemberExpenseInfoAfterOrdered(userId, totalPayment) {
     // MongoDB: Update member rank
-    const member = await MemberRankModel.findOne({ userId: userId });
+    const member = await MemberRankModel.findOne({ userId });
 
     try {
         if (member) {

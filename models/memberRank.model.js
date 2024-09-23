@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const memberRank = new mongoose.Schema(
     {
         userId: {
-            type: mongoose.Schema.Types.ObjectId,
+            type: String,
             ref: "Member",
             required: true,
         },

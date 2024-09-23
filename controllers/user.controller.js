@@ -39,6 +39,30 @@ async function getUser(req, res) {
     }
 }
 
+async function getUserByEmailOrPhone(req, res) {
+    const email = req.query.email;
+    const phone = req.query.phone;
+
+    const pool = await connectToDB();
+    if (!pool)
+        return res.status(500).json({
+            status: 500,
+            message: "Failed to connect to the database",
+        });
+
+    try {
+        const [rows, fields] = await pool.execute(
+            `SELECT * FROM Users WHERE email = '${email}' OR phone_number = '${phone}'`
+        );
+
+        return res.status(200).json({ status: 200, message: "success", data: rows[0] });
+    } catch (error) {
+        return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        if (pool) await pool.end();
+    }
+}
+
 async function updateProfile(req, res) {
     const user_id = req.params.id;
     const pool = await connectToDB();
@@ -71,4 +95,4 @@ async function updateProfile(req, res) {
     }
 }
 
-export { getUsers, getUser, updateProfile };
+export { getUsers, getUser, updateProfile, getUserByEmailOrPhone };
