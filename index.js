@@ -32,7 +32,7 @@ app.use(bodyParser.json());
 app.disable("etag");
 
 // Routes
-app.use("/", (req, res) => {
+app.get("/", (req, res) => {
     res.send("Welcome to Coffee Ecommerce API");
 });
 app.use("/user", userRoutes);
