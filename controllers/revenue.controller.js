@@ -11,25 +11,37 @@ async function getAdminRevenue(req, res) {
     try {
         const { day, month, year } = req.query;
 
-        let query = `
-        SELECT SUM(total_payment) AS total_revenue 
-        FROM Orders 
-        WHERE order_status = '${ORDER_STATUS.COMPLETED}'
-        `;
-
+        let query = "";
         const queryParams = [];
 
-        if (year) {
-            query += " AND YEAR(order_date) = ?";
+        if (year && !month && !day) {
+            // Revenue by month for a given year
+            query = `
+                SELECT MONTH(order_date) AS period, SUM(total_payment) AS total_revenue 
+                FROM Orders 
+                WHERE order_status = '${ORDER_STATUS.COMPLETED}' AND YEAR(order_date) = ?
+                GROUP BY MONTH(order_date)
+            `;
             queryParams.push(year);
-        }
-        if (month) {
-            query += " AND MONTH(order_date) = ?";
-            queryParams.push(month);
-        }
-        if (day) {
-            query += " AND DAY(order_date) = ?";
-            queryParams.push(day);
+        } else if (year && month && !day) {
+            // Revenue by day for a given month and year
+            query = `
+                SELECT DAY(order_date) AS period, SUM(total_payment) AS total_revenue 
+                FROM Orders 
+                WHERE order_status = '${ORDER_STATUS.COMPLETED}' AND YEAR(order_date) = ? AND MONTH(order_date) = ?
+                GROUP BY DAY(order_date)
+            `;
+            queryParams.push(year, month);
+        } else if (year && month && day) {
+            // Revenue for a specific day
+            query = `
+                SELECT SUM(total_payment) AS total_revenue 
+                FROM Orders 
+                WHERE order_status = '${ORDER_STATUS.COMPLETED}' AND YEAR(order_date) = ? AND MONTH(order_date) = ? AND DAY(order_date) = ?
+            `;
+            queryParams.push(year, month, day);
+        } else {
+            return res.status(400).json({ status: 400, message: "Please provide a valid date filter" });
         }
 
         const [rows] = await pool.query(query, queryParams);
@@ -37,7 +49,7 @@ async function getAdminRevenue(req, res) {
         return res.status(200).json({
             status: 200,
             message: "success",
-            data: rows[0],
+            data: rows,
         });
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });
@@ -56,25 +68,41 @@ async function getStoreRevenue(req, res) {
     try {
         const { day, month, year, storeId } = req.query;
 
-        let query = `
-        SELECT SUM(total_payment) AS total_revenue 
-        FROM Orders 
-        WHERE order_status = '${ORDER_STATUS.COMPLETED}'  AND store_id = ?
-        `;
+        if (!storeId) {
+            return res.status(400).json({ status: 400, message: "storeId is required" });
+        }
 
+        let query = "";
         const queryParams = [storeId];
 
-        if (year) {
-            query += " AND YEAR(order_date) = ?";
+        if (year && !month && !day) {
+            // Revenue by month for a given year
+            query = `
+                SELECT MONTH(order_date) AS period, SUM(total_payment) AS total_revenue 
+                FROM Orders 
+                WHERE order_status = '${ORDER_STATUS.COMPLETED}' AND store_id = ? AND YEAR(order_date) = ?
+                GROUP BY MONTH(order_date)
+            `;
             queryParams.push(year);
-        }
-        if (month) {
-            query += " AND MONTH(order_date) = ?";
-            queryParams.push(month);
-        }
-        if (day) {
-            query += " AND DAY(order_date) = ?";
-            queryParams.push(day);
+        } else if (year && month && !day) {
+            // Revenue by day for a given month and year
+            query = `
+                SELECT DAY(order_date) AS period, SUM(total_payment) AS total_revenue 
+                FROM Orders 
+                WHERE order_status = '${ORDER_STATUS.COMPLETED}' AND store_id = ? AND YEAR(order_date) = ? AND MONTH(order_date) = ?
+                GROUP BY DAY(order_date)
+            `;
+            queryParams.push(year, month);
+        } else if (year && month && day) {
+            // Revenue for a specific day
+            query = `
+                SELECT SUM(total_payment) AS total_revenue 
+                FROM Orders 
+                WHERE order_status = '${ORDER_STATUS.COMPLETED}' AND store_id = ? AND YEAR(order_date) = ? AND MONTH(order_date) = ? AND DAY(order_date) = ?
+            `;
+            queryParams.push(year, month, day);
+        } else {
+            return res.status(400).json({ status: 400, message: "Please provide a valid date filter" });
         }
 
         const [rows] = await pool.query(query, queryParams);
@@ -82,7 +110,7 @@ async function getStoreRevenue(req, res) {
         return res.status(200).json({
             status: 200,
             message: "success",
-            data: rows[0],
+            data: rows,
         });
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });
