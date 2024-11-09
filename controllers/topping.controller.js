@@ -34,7 +34,7 @@ async function getToppings(req, res) {
             message: "Failed to connect to the database",
         });
     try {
-        const [rows, fields] = await pool.execute("SELECT * FROM Toppings is_deleted IS NULL OR is_deleted = 0");
+        const [rows, fields] = await pool.execute("SELECT * FROM Toppings WHERE is_deleted IS NULL OR is_deleted = 0");
 
         return res.status(200).json({ status: 200, message: "success", data: rows });
     } catch (error) {
