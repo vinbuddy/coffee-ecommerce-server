@@ -1,4 +1,5 @@
 import connectToDB from "../config/db.js";
+import { bucket } from "../config/firebase.js";
 
 async function getProducts(req, res) {
     const pool = await connectToDB();
@@ -296,4 +297,48 @@ async function getProductToppings(req, res) {
     }
 }
 
-export { getProducts, getProduct, editProduct, deleteProduct, createProduct, getProductSizes, getProductToppings };
+async function uploadProductImage(req, res) {
+    try {
+        if (!req.file) {
+            return res.status(400).send({ error: "No file uploaded" });
+        }
+
+        const folderPath = `images/product/${req.file.originalname}`;
+
+        const blob = bucket.file(folderPath);
+        const blobStream = blob.createWriteStream({
+            metadata: {
+                contentType: req.file.mimetype,
+            },
+        });
+
+        blobStream.on("error", (err) => res.status(500).send({ error: err.message }));
+
+        blobStream.on("finish", async () => {
+            await blob.makePublic();
+
+            const image_url = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
+
+            return res.status(200).send({
+                data: {
+                    image_url,
+                },
+            });
+        });
+
+        blobStream.end(req.file.buffer);
+    } catch (error) {
+        return res.status(500).send({ error: error.message });
+    }
+}
+
+export {
+    getProducts,
+    getProduct,
+    editProduct,
+    deleteProduct,
+    createProduct,
+    getProductSizes,
+    getProductToppings,
+    uploadProductImage,
+};
