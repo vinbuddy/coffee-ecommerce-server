@@ -9,7 +9,10 @@ async function getAdminRevenue(req, res) {
             message: "Failed to connect to the database",
         });
     try {
-        const { day, month, year } = req.query;
+        let { day, month, year } = req.query;
+        day = Number(day);
+        month = Number(month);
+        year = Number(year);
 
         let query = "";
         const queryParams = [];
@@ -66,7 +69,11 @@ async function getStoreRevenue(req, res) {
             message: "Failed to connect to the database",
         });
     try {
-        const { day, month, year, storeId } = req.query;
+        let { day, month, year, storeId } = req.query;
+        day = Number(day);
+        month = Number(month);
+        year = Number(year);
+        storeId = Number(storeId);
 
         if (!storeId) {
             return res.status(400).json({ status: 400, message: "storeId is required" });
