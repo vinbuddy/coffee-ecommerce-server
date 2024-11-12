@@ -192,13 +192,8 @@ async function editProduct(req, res) {
                     await pool.query(
                         `INSERT INTO ProductSizes (product_id, size_id, size_price)
                         SELECT ?, ?, ?
-                        FROM dual
                         WHERE NOT EXISTS (
-                            SELECT 1
-                            FROM ProductSizes
-                            WHERE (product_id, size_id) IN (
-                                (SELECT product_id, size_id FROM ProductSizes WHERE product_id != ? OR size_id != ?)
-                            )
+                            SELECT 1 FROM ProductSizes WHERE product_id = ? AND size_id = ?
                         )`,
                         [product_id, size.size_id, size.size_price, product_id, size.size_id]
                     );
