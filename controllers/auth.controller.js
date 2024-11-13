@@ -120,20 +120,41 @@ async function createStoreAccount(req, res) {
             status: 500,
             message: "Failed to connect to the database",
         });
+
     try {
-        const { store_id, password } = req.body;
+        const { store_id, password, store_login_name, account_type } = req.body;
+
+        // Check if store_login_name and store_id is existed
+        const [store_accounts] = await pool.query(
+            `SELECT * FROM StoreAccounts WHERE store_login_name = '${store_login_name}'`
+        );
+
+        if (store_accounts && store_accounts.length) {
+            return res.status(400).json({
+                status: 400,
+                message: "Store account is already existed",
+            });
+        }
 
         const salt = await bcrypt.genSalt(10);
         const passwordHashed = await bcrypt.hash(password.toString(), salt);
 
-        const [result] = await pool.query("INSERT INTO StoreAccounts (store_id, password) VALUES (?, ?)", [
-            store_id,
-            passwordHashed,
-        ]);
+        const [result] = await pool.query(
+            "INSERT INTO StoreAccounts (store_id, password, store_login_name, account_type) VALUES (?, ?, ?, ?)",
+            [store_id, passwordHashed, store_login_name, account_type]
+        );
+
+        // Get store account after created
+        const [accounts] = await pool.query(
+            `SELECT *
+            FROM StoreAccounts 
+            WHERE store_login_name = '${store_login_name}'`
+        );
 
         return res.status(200).json({
             status: 200,
             message: "success",
+            data: accounts[0],
         });
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });
@@ -172,4 +193,92 @@ async function loginToAdmin(req, res) {
     }
 }
 
-export { createUserAccount, loginToStore, createStoreAccount, loginToAdmin };
+async function editStoreAccount(req, res) {
+    const pool = await connectToDB();
+    if (!pool)
+        return res.status(500).json({
+            status: 500,
+            message: "Failed to connect to the database",
+        });
+
+    try {
+        const { id, store_id, password, store_login_name, account_type } = req.body;
+
+        if (password) {
+            const salt = await bcrypt.genSalt(10);
+            const passwordHashed = await bcrypt.hash(password.toString(), salt);
+
+            await pool.query(
+                `UPDATE StoreAccounts SET password = ?, store_login_name = ?, account_type = ?, store_id = ? WHERE id = ?`,
+                [passwordHashed, store_login_name, account_type, store_id, id]
+            );
+        } else {
+            await pool.query(
+                `UPDATE StoreAccounts SET store_login_name = ?, account_type = ?, store_id = ? WHERE id = ?`,
+                [store_login_name, account_type, store_id, id]
+            );
+        }
+
+        const [accounts] = await pool.query(
+            `SELECT *
+            FROM StoreAccounts 
+            WHERE id = ${id}`
+        );
+
+        return res.status(200).json({ status: 200, message: "success", data: accounts[0] });
+    } catch (error) {
+        return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        if (pool) await pool.end();
+    }
+}
+
+async function deleteStoreAccount(req, res) {
+    const pool = await connectToDB();
+    if (!pool)
+        return res.status(500).json({
+            status: 500,
+            message: "Failed to connect to the database",
+        });
+
+    try {
+        const { id } = req.params;
+
+        await pool.query(`DELETE FROM StoreAccounts WHERE id = ${id}`);
+
+        return res.status(200).json({ status: 200, message: "success" });
+    } catch (error) {
+        return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        if (pool) await pool.end();
+    }
+}
+
+async function getStoreAccounts(req, res) {
+    const pool = await connectToDB();
+    if (!pool)
+        return res.status(500).json({
+            status: 500,
+            message: "Failed to connect to the database",
+        });
+
+    try {
+        const [store_accounts] = await pool.query(`SELECT * FROM StoreAccounts`);
+
+        return res.status(200).json({ status: 200, message: "success", data: store_accounts });
+    } catch (error) {
+        return res.status(500).json({ status: 500, message: error.message });
+    } finally {
+        if (pool) await pool.end();
+    }
+}
+
+export {
+    createUserAccount,
+    loginToStore,
+    createStoreAccount,
+    loginToAdmin,
+    editStoreAccount,
+    deleteStoreAccount,
+    getStoreAccounts,
+};
