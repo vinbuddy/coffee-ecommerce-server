@@ -90,7 +90,7 @@ async function loginToStore(req, res) {
         const { store_login_name, password } = req.body;
 
         const [store_accounts] = await pool.query(
-            `SELECT s.*, StoreAccounts.store_login_name, StoreAccounts.password 
+            `SELECT s.*, StoreAccounts.store_login_name, StoreAccounts.password, StoreAccounts.account_type
             FROM StoreAccounts 
             INNER JOIN Stores s ON s.id = store_id 
             WHERE store_login_name = '${store_login_name}'`
@@ -173,7 +173,9 @@ async function loginToAdmin(req, res) {
     try {
         const { email, password } = req.body;
 
-        const [admin_accounts] = await pool.query(`SELECT * FROM Users WHERE email = '${email}' AND role_id = 2`);
+        const [admin_accounts] = await pool.query(
+            `SELECT * FROM Users WHERE email = '${email}' AND role_id NOT IN (1, 3)`
+        );
 
         const originPassword = await bcrypt.compare(password.toString(), admin_accounts[0].password);
 
