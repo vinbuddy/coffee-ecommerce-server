@@ -500,9 +500,9 @@ async function createOrder(req, res) {
 
         await pool.commit();
 
-        const result = await updateMemberExpenseInfoAfterOrdered(user_id, total_payment);
+        //const result = await updateMemberExpenseInfoAfterOrdered(user_id, total_payment);
 
-        await updateMemberRank(user_id);
+        //await updateMemberRank(user_id);
 
         if (!result) {
             return res.status(500).json({ status: 500, message: "Failed to update member rank" });
