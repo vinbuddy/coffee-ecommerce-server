@@ -504,9 +504,9 @@ async function createOrder(req, res) {
 
         //await updateMemberRank(user_id);
 
-        if (!result) {
-            return res.status(500).json({ status: 500, message: "Failed to update member rank" });
-        }
+        // if (!result) {
+        //     return res.status(500).json({ status: 500, message: "Failed to update member rank" });
+        // }
 
         return res.status(200).json({ status: 200, message: "success", data: rows[0] });
     } catch (error) {
