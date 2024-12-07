@@ -1,8 +1,5 @@
 import connectToDB from "../config/db.js";
 import moment from "moment";
-import MemberRankModel from "../models/memberRank.model.js";
-import mongoose from "mongoose";
-import { EXPENSE_THRESHOLD, ORDER_COUNT_THRESHOLD, MEMBER_RANK } from "../utils/constant.js";
 
 async function getOrders(req, res) {
     const pool = await connectToDB();
@@ -55,6 +52,10 @@ async function getUserOrders(req, res) {
             ORDER BY Orders.order_date DESC`
         );
 
+        if (orders.length === 0) {
+            return res.status(200).json({ status: 200, message: "success", data: [] });
+        }
+
         const orderIds = orders.map((order) => `'${order.id}'`).join(",");
 
         const [orderDetails] = await pool.query(
@@ -79,7 +80,7 @@ async function getUserOrders(req, res) {
             WHERE
                 od.order_id IN (${orderIds})
             GROUP BY
-                od.id, p.name, p.price, p.image, s.size_name, ps.size_price, od.quantity;`
+                od.id, od.order_id, p.id, p.name, p.price, p.image, s.size_name, ps.size_price, od.quantity;`
         );
 
         const orderDetailsMap = orderDetails.reduce((map, detail) => {
@@ -278,97 +279,6 @@ async function getOrderInfo(req, res) {
         return res.status(500).json({ status: 500, message: error.message });
     } finally {
         if (pool) await pool.end();
-    }
-}
-
-async function updateMemberExpenseInfoAfterOrdered(userId, totalPayment) {
-    // MongoDB: Update member rank
-    const member = await MemberRankModel.findOne({ userId });
-
-    try {
-        if (member) {
-            member.orderCount += 1;
-            member.expense = new mongoose.Types.Decimal128((parseFloat(member.expense) + totalPayment).toString());
-
-            member.sixMonthOrderCount += 1;
-            member.sixMonthExpense = new mongoose.Types.Decimal128(
-                (parseFloat(member.sixMonthExpense) + totalPayment).toString()
-            );
-
-            member.yearlyOrderCount += 1;
-            member.yearlyExpense = new mongoose.Types.Decimal128(
-                (parseFloat(member.yearlyExpense) + totalPayment).toString()
-            );
-
-            await member.save();
-        } else {
-            // Create a new member rank if not found
-            await MemberRankModel.create({
-                userId: userId,
-                orderCount: 1,
-                expense: totalPayment,
-                sixMonthOrderCount: 1,
-                sixMonthExpense: totalPayment,
-                yearlyOrderCount: 1,
-                yearlyExpense: totalPayment,
-            });
-        }
-        return true;
-    } catch (error) {
-        console.log("error: ", error);
-        return false;
-    }
-}
-
-function calculateNewMemberRank(member) {
-    let newRank = member.rank; // Giữ nguyên rank ban đầu
-
-    // Xét hạng dựa trên số lượng đơn hàng
-    if (member.sixMonthOrderCount >= ORDER_COUNT_THRESHOLD.DIAMOND) {
-        newRank = MEMBER_RANK.DIAMOND;
-    } else if (member.sixMonthOrderCount >= ORDER_COUNT_THRESHOLD.GOLD) {
-        newRank = MEMBER_RANK.GOLD;
-    } else if (member.sixMonthOrderCount >= ORDER_COUNT_THRESHOLD.SILVER) {
-        newRank = MEMBER_RANK.SILVER;
-    }
-
-    // Nếu chi tiêu đạt mức yêu cầu, nâng cấp hạng
-    if (member.sixMonthExpense >= EXPENSE_THRESHOLD.DIAMOND && newRank !== MEMBER_RANK.DIAMOND) {
-        newRank = MEMBER_RANK.DIAMOND;
-    } else if (member.sixMonthExpense >= EXPENSE_THRESHOLD.GOLD && newRank !== MEMBER_RANK.GOLD) {
-        newRank = MEMBER_RANK.GOLD;
-    } else if (member.sixMonthExpense >= EXPENSE_THRESHOLD.SILVER && newRank !== MEMBER_RANK.SILVER) {
-        newRank = MEMBER_RANK.SILVER;
-    }
-
-    return newRank;
-}
-
-async function updateMemberRank(userId = null) {
-    if (userId) {
-        const member = await MemberRankModel.findOne({ userId });
-
-        const newRank = calculateNewMemberRank(member);
-
-        // Nếu rank đã thay đổi, lưu lại cập nhật
-        if (member.rank !== newRank) {
-            member.rank = newRank;
-            await member.save();
-        }
-
-        return;
-    }
-
-    const members = await MemberRankModel.find();
-
-    for (const member of members) {
-        const newRank = calculateNewMemberRank(member);
-
-        // Nếu rank đã thay đổi, lưu lại cập nhật
-        if (member.rank !== newRank) {
-            member.rank = newRank;
-            await member.save();
-        }
     }
 }
 
