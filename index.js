@@ -2,7 +2,6 @@ import express from "express";
 import env from "dotenv";
 import cors from "cors";
 import bodyParser from "body-parser";
-import mongoose from "mongoose";
 
 import userRoutes from "./routes/user.route.js";
 import authRoutes from "./routes/auth.route.js";
@@ -52,15 +51,5 @@ app.use("/revenue", revenueRoutes);
 app.use("/member", memberRoutes);
 
 app.listen(port, () => {
-    const mongodbURI = process.env.MONGODB_URI;
-    mongoose.connect(mongodbURI).then(
-        (dbo) => {
-            console.log("MongoDB connected 🚀");
-            console.log(`running on http://localhost:${port}`);
-        },
-        (err) => {
-            console.log("MongoDB connection error: ", err);
-            console.log("MongoDB connection failed ❌");
-        }
-    );
+    console.log(`running on http://localhost:${port}`);
 });
